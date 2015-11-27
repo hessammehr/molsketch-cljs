@@ -13,16 +13,21 @@
                       :bonds
                       { 0 {:nodes [0 1]}}}))
 
-; (defn hello-world []
-;   [:h1 (:text @app-state)])
+(defn add-node [x y] (swap! app-state assoc-in
+                      [:nodes (rand-int 1000)]
+                      {:x x :y y}))
+
+(defn handle-click [ev]
+  (let [x (aget ev "clientX")
+        y (aget ev "clientY")]
+      (add-node x y)))
 
 (defn draw []
   (let [{nodes :nodes bonds :bonds} @app-state]
-    (conj [:svg]
+    (conj [:svg {:on-click (fn [ev] (handle-click ev))}]
       (for [[id {x :x y :y}] nodes]
         [:circle {:cx x :cy y
-                  :r 3 :key id
-                  :on-click (fn [] (js/alert (str "Hi from node " id)))}])
+                  :r 3 :key id}])
       (for [[id {[b1 b2] :nodes}] bonds]
         (let [n1 (get nodes b1) n2 (get nodes b2)]
           [:line {:x1 (:x n1)
@@ -31,6 +36,7 @@
                   :y2 (:y n2)
                   :class "bond"
                   :key id}])))))
+
 
 (println (draw))
 
