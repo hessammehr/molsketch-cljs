@@ -18,8 +18,8 @@
                       {:x x :y y}))
 
 (defn handle-click [ev]
-  (let [x (aget ev "clientX")
-        y (aget ev "clientY")]
+  (let [x (- (aget ev "pageX") 8)
+        y (- (aget ev "pageY") 8)]
       (add-node x y)))
 
 (defn draw []
