@@ -17,24 +17,23 @@
                       { 0 {:nodes #{0 1} :id 1}
                         1 {:nodes #{1 2} :id 2}}}))
 
-(defn max-node-id []
-  (->> (:nodes @app-state)
+(defn max-node-id [{nodes :nodes}]
+  (->> nodes
       keys
       (apply max)))
 
 (defn node-position [node]
   (get-in node [:pos]))
 
-(defn add-node! [{id :id :as node :or {id (+ (max-node-id) 1)}}]
-  ; (let ;[new-id (+ (max-node-id) 1)
-  ;       node
+(defn add-node! [{id :id :as node
+                  :or {id (+ (max-node-id @app-state) 1)}}]
       (swap! app-state assoc-in
-        [:nodes id] node))
+        [:nodes id] (assoc node :id id)))
 
 (defn canvas-click [ev]
   (let [x (- (aget ev "pageX") 8)
         y (- (aget ev "pageY") 8)
-        nearest-node (nearest-node [x y])
+        nearest-node (nearest-node [x y] @app-state)
         nn-distance (distance (:pos nearest-node) [x y])]
       (if (> nn-distance node-click-radius)
         (add-node! {:pos [x y]})
@@ -52,18 +51,18 @@
   [:circle {:cx x :cy y :r node-radius
             :on-click (fn [ev] (node-click id))}])
 
-(defn get-bonds [node]
-  (->> (:bonds @app-state)
+(defn get-bonds [node {bonds :bonds}]
+  (->> bonds
       seq
       (filter #(contains? (:nodes (second %)) node))
       (into {})))
 
 ; Number of bonds to node not counting implicit hydrogens
-(defn explicit-valence [node]
-  (count (get-bonds node)))
+(defn explicit-valence [node state]
+  (count (get-bonds node state)))
 
-(defn nearest-node [[x y]]
-  (->> (:nodes @app-state)
+(defn nearest-node [[x y] {nodes :nodes}]
+  (->> nodes
       vals
       (apply min-key #(distance-squared [x y] (:pos %)))))
 
@@ -89,6 +88,3 @@
 
 
 (defn on-js-reload [])
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
