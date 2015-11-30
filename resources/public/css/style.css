@@ -1,2 +1,7 @@
-/* some style */
+body {background-color: white;}
 .bond {stroke: black;}
+.label {
+  font-family: sans-serif;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
