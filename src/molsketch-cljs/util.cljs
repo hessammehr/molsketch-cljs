@@ -1,5 +1,6 @@
 (ns molsketch-cljs.util)
-;  (:require []))
+
+(declare distance distance-squared)
 
 (defn clip-line [[x1 y1] [x2 y2] clip1 clip2]
   (let [l (distance [x1 y1] [x2 y2])
@@ -15,3 +16,6 @@
 
 (defn distance [p1 p2]
   (Math.sqrt (distance-squared p1 p2)))
+
+(defn max-node [nodes]
+  (apply max (keys nodes)))
