@@ -2,11 +2,13 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [molsketch-cljs.components :as cmp]
             [molsketch-cljs.constants :refer [node-click-radius]]
-            [molsketch-cljs.util :refer [distance clip-line max-node]]))
+            [molsketch-cljs.util :refer [distance clip-line max-node]]
+            [molsketch-cljs.functional :refer [sprout-bond add-free-node
+                                               add-molecule]]))
 
 (enable-console-print!)
 
-(declare node add-node! node-click node-position nearest-node)
+(declare node node-click node-position nearest-node)
 ;  bond margin clip-line distance-squared distance canvas-click)
 
 
@@ -22,7 +24,9 @@
           { 0 {:nodes #{0 1 2} :bonds #{0 1} :id 0}}}))
 
 (defn node-click [node]
-  (println "Node" node "clicked!"))
+  (println "Node" node "clicked!")
+  ;(println (sprout-bond @app-state node))
+  (swap! app-state sprout-bond node))
 
 (defn canvas-click [ev]
   (let [x (- (aget ev "pageX") 8)
@@ -30,7 +34,7 @@
         nearest-node (nearest-node [x y] @app-state)
         nn-distance (distance (:pos nearest-node) [x y])]
       (if (> nn-distance node-click-radius)
-        (add-node! {:pos [x y]})
+        (swap! app-state add-node {:pos [x y]})
         (node-click nearest-node))))
 
 
@@ -49,12 +53,6 @@
   (->> nodes
       vals
       (apply min-key #(distance [x y] (:pos %)))))
-
-
-(defn add-node! [{id :id :as node
-                  :or {id (+ (max-node (:nodes @app-state)) 1)}}]
-      (swap! app-state assoc-in
-        [:nodes id] (assoc node :id id)))
 
 (defn editor []
   (let [{molecules :molecules} @app-state]

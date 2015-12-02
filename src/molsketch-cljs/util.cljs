@@ -19,3 +19,6 @@
 
 (defn max-node [nodes]
   (apply max (keys nodes)))
+
+(defn max-molecules [mols]
+  (apply max (keys mols)))
