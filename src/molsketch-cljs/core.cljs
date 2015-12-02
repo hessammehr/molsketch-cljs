@@ -1,16 +1,14 @@
 (ns molsketch-cljs.core
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require [reagent.core :as reagent :refer [atom]]
+            [molsketch-cljs.components :as cmp]
+            [molsketch-cljs.constants :refer :all]
+            [molsketch-cljs.util :refer :all]))
 
 (enable-console-print!)
 
-(declare node add-node! node-click max-node-id node-position nearest-node
-  bond margin clip-line distance-squared distance canvas-click)
+;(declare node add-node! node-click max-node-id node-position nearest-node
+;  bond margin clip-line distance-squared distance canvas-click)
 
-(def node-radius 3)
-(def node-margin-radius 9)
-(def node-click-radius 8)
-
-(def elements {:N {:valence-electrons 5}})
 
 (def app-state (atom {:nodes
                       { 0 {:pos [10 15] :id 0 :elem :N}
@@ -19,6 +17,9 @@
                       :bonds
                       { 0 {:nodes #{0 1} :id 1}
                         1 {:nodes #{1 2} :id 2}}}))
+
+(defn node-click [node]
+  (println "Node" node "clicked!"))
 
 (defn canvas-click [ev]
   (let [x (- (aget ev "pageX") 8)
@@ -29,34 +30,10 @@
         (add-node! {:pos [x y]})
         (node-click nearest-node))))
 
-(defn bond [{nodes :nodes id :id order :order}]
-  (let [[{p1 :pos} {p2 :pos} :as nodes] (seq nodes)
-        [clip1 clip2] (map margin nodes)
-        [[x1 y1] [x2 y2]] (clip-line p1 p2 clip1 clip2)]
-    [:line {:x1 x1 :y1 y1
-            :x2 x2 :y2 y2
-            :id id
-            :class "bond"}]))
+(defn margin [node])
+  (if (:elem node) node-margin-radius 0)
 
-(defn margin [node]
-  (if (:elem node) node-margin-radius 0))
 
-(defn clip-line [[x1 y1] [x2 y2] clip1 clip2]
-  (let [l (distance [x1 y1] [x2 y2])
-        dx1 (/ (* clip1 (- x2 x1)) l)
-        dx2 (/ (* clip2 (- x1 x2)) l)
-        dy1 (/ (* clip1 (- y2 y1)) l)
-        dy2 (/ (* clip2 (- y1 y2)) l)]
-      [[(+ x1 dx1) (+ y1 dy1)] [(+ x2 dx2) (+ y2 dy2)]]))
-
-(defn node [{[x y] :pos id :id elem :elem}]
-  (if-not elem [:circle {:cx x :cy y :r node-radius :id (str "node" id)}]
-                          ;:on-click (fn [ev] (node-click id))}]
-               [:text {:x x :y y :id (str "node" id)
-                       :class "label"} (name elem)]))
-
-(defn node-click [node]
-  (println "Node" node "clicked!"))
 
 (defn get-bonds [node {bonds :bonds}]
   (->> bonds
@@ -65,7 +42,7 @@
       (into {})))
 
 ; Number of bonds to node not counting implicit hydrogens
-(defn explicit-valence [node state]
+(defn explicit-bonds [node state]
   (count (get-bonds node state)))
 
 (defn nearest-node [[x y] {nodes :nodes}]
@@ -78,27 +55,18 @@
       keys
       (apply max)))
 
-(defn node-position [node]
-  (get-in node [:pos]))
-
 (defn add-node! [{id :id :as node
                   :or {id (+ (max-node-id @app-state) 1)}}]
       (swap! app-state assoc-in
         [:nodes id] (assoc node :id id)))
 
-(defn distance-squared [[x1 y1] [x2 y2]]
-  (+ (Math/pow (- x1 x2) 2)
-    (Math/pow (- y1 y2) 2)))
-(defn distance [p1 p2]
-  (Math.sqrt (distance-squared p1 p2)))
-
 (defn editor []
   (let [{nodes :nodes bonds :bonds} @app-state]
     (conj [:svg {:on-click canvas-click}]
       (for [[id n] nodes]
-        ^{:key id}[node n])
+        ^{:key id}[cmp/node n])
       (for [[id b] bonds]
-          ^{:key id}[bond (update-in b [:nodes] (partial map nodes))]))))
+          ^{:key id}[cmp/bond (update-in b [:nodes] (partial map nodes))]))))
 
 ;(println (draw))
 
