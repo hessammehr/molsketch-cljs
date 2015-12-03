@@ -17,8 +17,8 @@
 (defn distance [p1 p2]
   (Math.sqrt (distance-squared p1 p2)))
 
-(defn max-node [nodes]
-  (apply max (keys nodes)))
+(defn max-node [state]
+  (apply max (keys (:nodes state))))
 
-(defn max-molecules [mols]
-  (apply max (keys mols)))
+(defn max-molecule [state]
+  (apply max (keys (:molecules state))))

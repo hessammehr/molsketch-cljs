@@ -4,7 +4,7 @@
             [molsketch-cljs.constants :refer [node-click-radius]]
             [molsketch-cljs.util :refer [distance clip-line max-node]]
             [molsketch-cljs.functional :refer [sprout-bond add-free-node
-                                               add-molecule]]))
+                                               add-molecule get-bonds]]))
 
 (enable-console-print!)
 
@@ -34,16 +34,8 @@
         nearest-node (nearest-node [x y] @app-state)
         nn-distance (distance (:pos nearest-node) [x y])]
       (if (> nn-distance node-click-radius)
-        (swap! app-state add-node {:pos [x y]})
+        (swap! app-state add-free-node {:pos [x y]})
         (node-click nearest-node))))
-
-
-
-(defn get-bonds [node {bonds :bonds}]
-  (->> bonds
-      seq
-      (filter #(contains? (:nodes (second %)) node))
-      (into {})))
 
 ; Number of bonds to node not counting implicit hydrogens
 (defn explicit-bonds [node state]
