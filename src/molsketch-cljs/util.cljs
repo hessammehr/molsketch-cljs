@@ -22,3 +22,12 @@
 
 (defn max-molecule [state]
   (apply max (keys (:molecules state))))
+
+(defn displacement [[x1 y1] [x2 y2]]
+  [(- x2 x1) (- y2 y1)])
+
+(defn add-vectors [vs])
+
+(defn normalize [[x y] len]
+  (let [m (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))]
+    [(/ (* x len) m) (/ (* y len) m)]))

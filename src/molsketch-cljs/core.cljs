@@ -3,8 +3,9 @@
             [molsketch-cljs.components :as cmp]
             [molsketch-cljs.constants :refer [node-click-radius]]
             [molsketch-cljs.util :refer [distance clip-line max-node]]
-            [molsketch-cljs.functional :refer [sprout-bond add-free-node
-                                               add-molecule get-bonds]]))
+            [molsketch-cljs.functional
+              :refer [sprout-bond add-free-node add-molecule
+                      get-bonds]]))
 
 (enable-console-print!)
 
@@ -24,9 +25,8 @@
           { 0 {:nodes #{0 1 2} :bonds #{0 1} :id 0}}}))
 
 (defn node-click [node]
-  (println "Node" node "clicked!")
-  ;(println (sprout-bond @app-state node))
-  (swap! app-state sprout-bond node))
+  (swap! app-state sprout-bond (:id node)))
+  ;(println (sprout-bond @app-state (:id node))))
 
 (defn canvas-click [ev]
   (let [x (- (aget ev "pageX") 8)

@@ -1,8 +1,9 @@
 (ns molsketch-cljs.functional
-  (:require [molsketch-cljs.util :refer [max-node max-molecule]]))
+  (:require [molsketch-cljs.util
+              :refer [max-node max-molecule displacement
+                      normalize]]
+            [molsketch-cljs.constants :refer [bond-length]]))
 
-; (defn add-molecule [m]
-;   (let [{nodes :nodes}]))
 
 (defn new-node [state node-props]
   (let [id (inc (max-node state))]
@@ -28,9 +29,37 @@
       (add-molecule m))))
 
 
-(defn get-bonds [state node]
+(defn get-bonds [state node-id]
   (->> (:bonds state)
        vals
-       (filter #(contains? (:nodes %) node))))
+       (filter #(contains? (:nodes %) node-id))))
 
-(defn sprout-bond [state node] state)
+(defn connected [state node-id]
+  (let [b (get-bonds state node-id)]
+    (->> b
+      (map #(disj (:nodes %) node-id))
+      (map first))))
+
+(defn node-displacement [state n1-id n2-id]
+  (let [nodes (:nodes state)
+        n1 (nodes n1-id)
+        n2 (nodes n2-id)]
+      (displacement (:pos n1) (:pos n2))))
+
+(defn find-molecule [state node-id])
+
+(defn new-bond [state bond-props])
+
+(defn add-bond [state b])
+
+(defn sprout-bond [state node-id]
+  (let [cur-pos (get-in state [:nodes node-id :pos])
+        vecs (map (partial node-displacement state node-id)
+              (connected state node-id))
+        sum (apply map + vecs)
+        new-dir (map - sum)
+        new-pos (mapv + cur-pos (normalize new-dir bond-length))
+        n (new-node state {:pos new-pos})]
+      (-> state
+        (add-node n)
+        (update-in [:molecules 0 :nodes] conj (:id n)))))
