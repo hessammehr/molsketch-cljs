@@ -5,11 +5,11 @@
             [molsketch-cljs.util :refer [distance clip-line max-node]]
             [molsketch-cljs.functional
               :refer [sprout-bond add-free-node add-molecule
-                      get-bonds]]))
+                      get-bonds nearest-node]]))
 
 (enable-console-print!)
 
-(declare node node-click node-position nearest-node)
+(declare node-click)
 ;  bond margin clip-line distance-squared distance canvas-click)
 
 
@@ -25,30 +25,31 @@
           { 0 {:nodes #{0 1 2} :bonds #{0 1} :id 0}}}))
 
 (defn node-click [node]
-  (swap! app-state sprout-bond (:id node)))
+  (swap! app-state sprout-bond node))
   ;(println (sprout-bond @app-state (:id node))))
+
+(defn canvas-mouse-move [ev]
+  (let [x (- (aget ev "pageX") 8)
+        y (- (aget ev "pageY") 8)
+        [nearest nn-distance] (nearest-node @app-state [x y])]
+    (swap! app-state assoc :hovered [:nodes nearest])))
+    ;(println (str "Nearest node: ", nearest))))
 
 (defn canvas-click [ev]
   (let [x (- (aget ev "pageX") 8)
         y (- (aget ev "pageY") 8)
-        nearest-node (nearest-node [x y] @app-state)
-        nn-distance (distance (:pos nearest-node) [x y])]
+        [nearest nn-distance] (nearest-node @app-state [x y])]
       (if (> nn-distance node-click-radius)
         (swap! app-state add-free-node {:pos [x y]})
-        (node-click nearest-node))))
+        (node-click nearest))))
 
 ; Number of bonds to node not counting implicit hydrogens
 (defn explicit-bonds [node state]
   (count (get-bonds node state)))
 
-(defn nearest-node [[x y] {nodes :nodes}]
-  (->> nodes
-      vals
-      (apply min-key #(distance [x y] (:pos %)))))
-
 (defn editor []
   (let [{molecules :molecules} @app-state]
-    (into [:svg {:on-click canvas-click}]
+    (into [:svg {:on-click canvas-click :on-mouse-move canvas-mouse-move}]
       (for [[id m] molecules]
         ^{:key id}(cmp/molecule m @app-state)))))
 

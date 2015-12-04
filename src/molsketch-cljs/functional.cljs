@@ -1,8 +1,16 @@
 (ns molsketch-cljs.functional
   (:require [molsketch-cljs.util
               :refer [max-node max-molecule displacement
-                      normalize]]
+                      normalize distance]]
             [molsketch-cljs.constants :refer [bond-length]]))
+
+; returns [n (distance (:pos n) point)] where n is the closest
+; node to point.
+(defn nearest-node [state point]
+  (let [node (->> state
+              :nodes
+              (apply min-key #(distance point (:pos (second %)))))]
+    (update node 1 #(distance point (:pos %)))))
 
 
 (defn new-node [state node-props]

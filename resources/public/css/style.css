@@ -5,3 +5,5 @@ body {background-color: white;}
   text-anchor: middle;
   dominant-baseline: central;
 }
+
+.hovered {fill: lightblue; stroke: lightblue}
