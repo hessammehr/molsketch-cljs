@@ -4,6 +4,12 @@
                       normalize distance]]
             [molsketch-cljs.constants :refer [bond-length]]))
 
+(defn add-class [node class]
+  (update node :class str " " class))
+
+(defn prepare [state] state
+   (if (:hovered state) (update-in state (:hovered state) add-class "hovered") state))
+
 ; returns [n (distance (:pos n) point)] where n is the closest
 ; node to point.
 (defn nearest-node [state point]

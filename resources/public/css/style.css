@@ -6,4 +6,6 @@ body {background-color: white;}
   dominant-baseline: central;
 }
 
-.hovered {fill: lightblue; stroke: lightblue}
+circle {stroke-width: 0;}
+
+.hovered {fill: lightblue;}

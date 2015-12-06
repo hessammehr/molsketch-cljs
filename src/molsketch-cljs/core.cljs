@@ -1,11 +1,11 @@
 (ns molsketch-cljs.core
   (:require [reagent.core :as reagent :refer [atom]]
             [molsketch-cljs.components :as cmp]
-            [molsketch-cljs.constants :refer [node-click-radius]]
+            [molsketch-cljs.constants :refer [node-click-radius hover-distance]]
             [molsketch-cljs.util :refer [distance clip-line max-node]]
             [molsketch-cljs.functional
               :refer [sprout-bond add-free-node add-molecule
-                      get-bonds nearest-node]]))
+                      get-bonds nearest-node prepare]]))
 
 (enable-console-print!)
 
@@ -32,7 +32,8 @@
   (let [x (- (aget ev "pageX") 8)
         y (- (aget ev "pageY") 8)
         [nearest nn-distance] (nearest-node @app-state [x y])]
-    (swap! app-state assoc :hovered [:nodes nearest])))
+    (swap! app-state assoc :hovered
+      (when (< nn-distance hover-distance) [:nodes nearest]))))
     ;(println (str "Nearest node: ", nearest))))
 
 (defn canvas-click [ev]
@@ -48,10 +49,11 @@
   (count (get-bonds node state)))
 
 (defn editor []
-  (let [{molecules :molecules} @app-state]
-    (into [:svg {:on-click canvas-click :on-mouse-move canvas-mouse-move}]
-      (for [[id m] molecules]
-        ^{:key id}(cmp/molecule m @app-state)))))
+  (let [{molecules :molecules :as state} (prepare @app-state)]
+    (println (prepare @app-state))
+    [:svg {:on-click canvas-click :on-mouse-move canvas-mouse-move}
+      (doall (for [[id m] molecules]
+              ^{:key (str "m" id)}(cmp/molecule state m)))]))
 
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))
