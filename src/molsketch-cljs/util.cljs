@@ -39,3 +39,7 @@
   (let [t (/ (* degrees (.-PI js/Math)) 180)]
       [(- (* x (Math/cos t)) (* y (Math/sin t)))
        (+ (* x (Math/sin t)) (* y (Math/cos t)))]))
+
+(defn parse-mouse-event [ev]
+  {:x (- (aget ev "pageX") 8)
+   :y (- (aget ev "pageY") 8)})

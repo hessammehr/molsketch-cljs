@@ -80,7 +80,7 @@
         sum (apply map + vecs)
         new-dir (map - sum)
         new-dir (if (= (count vecs) 1)
-                  (do (println "rotating")(rotate new-dir 45)) new-dir)
+                  (rotate new-dir 45) new-dir)
         new-pos (mapv + cur-pos (normalize new-dir bond-length))
         n (new-node state {:pos new-pos})
         b (new-bond state {:nodes #{node-id (:id n)}})
