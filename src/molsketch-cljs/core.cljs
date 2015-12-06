@@ -15,9 +15,9 @@
 
 (def app-state
   (atom {:nodes
-          { 0 {:pos [10 15] :id 0 :elem :P}
+          { 0 {:pos [65 30] :id 0 :elem :P}
             1 {:pos [90 50] :id 1}
-            2 {:pos [90 120] :id 2 :elem :O}}
+            2 {:pos [90 80] :id 2 :elem :O}}
          :bonds
           { 0 {:nodes #{0 1} :id 0}
             1 {:nodes #{1 2} :id 1}}
@@ -50,7 +50,6 @@
 
 (defn editor []
   (let [{molecules :molecules :as state} (prepare @app-state)]
-    (println (prepare @app-state))
     [:svg {:on-click canvas-click :on-mouse-move canvas-mouse-move}
       (doall (for [[id m] molecules]
               ^{:key (str "m" id)}(cmp/molecule state m)))]))

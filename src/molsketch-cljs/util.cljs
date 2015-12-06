@@ -20,6 +20,9 @@
 (defn max-node [state]
   (apply max (keys (:nodes state))))
 
+(defn max-bond [state]
+  (apply max (keys (:bonds state))))
+
 (defn max-molecule [state]
   (apply max (keys (:molecules state))))
 
@@ -31,3 +34,8 @@
 (defn normalize [[x y] len]
   (let [m (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))]
     [(/ (* x len) m) (/ (* y len) m)]))
+
+(defn rotate [[x y] degrees]
+  (let [t (/ (* degrees (.-PI js/Math)) 180)]
+      [(- (* x (Math/cos t)) (* y (Math/sin t)))
+       (+ (* x (Math/sin t)) (* y (Math/cos t)))]))
