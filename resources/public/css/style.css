@@ -4,6 +4,10 @@ body {background-color: white;}
   font-family: sans-serif;
   text-anchor: middle;
   dominant-baseline: central;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
 }
 
 circle {stroke-width: 0;}
