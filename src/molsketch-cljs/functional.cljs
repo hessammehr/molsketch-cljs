@@ -8,16 +8,21 @@
   (update node :class str " " class))
 
 (defn prepare [state] state
-   (if (:hovered state) (update-in state (:hovered state) add-class "hovered") state))
+   (if-let [x (get-in state [:status :hovered])]
+      (update-in state x add-class "hovered")
+      state))
 
-; returns [n (distance (:pos n) point)] where n is the closest
-; node to point.
 (defn nearest-node [state point]
-  (let [node (->> state
-              :nodes
-              (apply min-key #(distance point (:pos (second %)))))]
-    (update node 1 #(distance point (:pos %)))))
+  (->> state
+      :nodes
+      (apply min-key #(distance point (:pos (second %))))
+      first))
 
+(defn node-within [state point radius]
+  (let [n (nearest-node state point)
+        pos (get-in state [:nodes n :pos])
+        d (distance pos point)]
+      (when (< d radius) n)))
 
 (defn new-node [state node-props]
   (let [id (inc (max-node state))]

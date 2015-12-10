@@ -42,4 +42,5 @@
 
 (defn parse-mouse-event [ev]
   {:x (- (aget ev "pageX") 8)
-   :y (- (aget ev "pageY") 8)})
+   :y (- (aget ev "pageY") 8)
+   :button (aget ev "button")})

@@ -2,10 +2,12 @@
 
 (def node-radius 2)
 (def label-margin 9)
-(def node-click-radius 8)
+(def node-click-radius 5)
 (def bond-length 30)
-(def hover-distance 10)
-(def min-drag-radius 10) ; movement before it's counted as a drag
+(def hover-radius 5)
+(def min-drag-radius 5) ; movement before it's counted as a drag
+
+(def editor-dimensions [600 200])
 
 (def elements {:N {:valence-electrons 5}})
 
