@@ -7,7 +7,7 @@
                                          parse-mouse-event]]
             [molsketch-cljs.functional
               :refer [sprout-bond add-free-node add-molecule
-                      get-bonds node-within prepare]]))
+                      get-bonds nodes-within prepare node-inside]]))
 
 (enable-console-print!)
 
@@ -15,7 +15,7 @@
 ;  bond margin clip-line distance-squared distance canvas-click)
 
 
-(def app-state
+(defonce app-state
   (atom {:nodes
           { 0 {:pos [65 30] :id 0 :elem :P}
             1 {:pos [90 50] :id 1}
@@ -32,12 +32,11 @@
   ;(println (sprout-bond @app-state (:id node))))
 
 (defn normal-mouse-move [{x :x y :y}]
-  (let [n (node-within @app-state [x y] hover-radius)]
-    (println x y)
+  (let [n (node-inside @app-state [x y] hover-radius)]
     (swap! app-state assoc-in [:status :hovered] (when n [:nodes n]))))
 
 (defn normal-click [{x :x y :y}]
-  (if-let [n (node-within @app-state [x y] node-click-radius)]
+  (if-let [n (node-inside @app-state [x y] node-click-radius)]
     (node-click n)
     (swap! app-state add-free-node {:pos [x y]})))
 
