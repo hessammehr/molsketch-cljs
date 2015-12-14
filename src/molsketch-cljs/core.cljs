@@ -4,10 +4,10 @@
             [molsketch-cljs.constants :refer [node-click-radius hover-radius
                                               min-drag-radius editor-dimensions]]
             [molsketch-cljs.util :refer [distance clip-line max-node
-                                         parse-mouse-event]]
+                                         parse-mouse-event parse-keyboard-event]]
             [molsketch-cljs.functional
-              :refer [sprout-bond add-free-node add-molecule
-                      get-bonds nodes-within prepare node-inside]]))
+             :refer [sprout-bond add-free-node add-molecule
+                     get-bonds nodes-within prepare node-inside]]))
 
 (enable-console-print!)
 
@@ -28,8 +28,7 @@
          :status {:mode :normal :mouse nil}}))
 
 (defn node-click [node-id]
-  (swap! app-state sprout-bond node-id))
-  ;(println (sprout-bond @app-state (:id node))))
+  (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
 
 (defn normal-mouse-move [{x :x y :y}]
   (let [n (node-inside @app-state [x y] hover-radius)]
@@ -38,7 +37,8 @@
 (defn normal-click [{x :x y :y}]
   (if-let [n (node-inside @app-state [x y] node-click-radius)]
     (node-click n)
-    (swap! app-state add-free-node {:pos [x y]})))
+    ;; (swap! app-state add-free-node {:pos [x y]})
+    (swap! app-state assoc-in [:status :selected] nil)))
 
 (defn do-drag [{x :x y :y}]
   (let [h (get-in @app-state [:status :hovered])]
@@ -65,9 +65,14 @@
       (normal-mouse-move parsed)
       (do-drag parsed))))
 
+(defn key-press [ev]
+  (let [{key :key} (parse-keyboard-event ev)]
+    (when-let [[_ n-id] (get-in @app-state [:status :hovered])]
+      (swap! app-state sprout-bond n-id))))
+
 (defn editor []
   (let [{molecules :molecules :as state} (prepare @app-state)]
-    [:div.editor
+    [:div.editor {:on-key-down key-press}
       [:svg {:on-mouse-up mouse-up :on-mouse-move mouse-move
              :on-mouse-down mouse-down}
        (doall (for [[id m] molecules]
@@ -78,4 +83,5 @@
                           (. js/document (getElementById "app")))
 
 
-(defn on-js-reload [])
+(defn on-js-reload []
+  (aset js/document "onkeydown" key-press))

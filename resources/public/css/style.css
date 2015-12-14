@@ -13,3 +13,4 @@ body {background-color: white;}
 circle {stroke-width: 0;}
 
 .hovered {fill: lightblue;}
+.selected {fill: red;}
