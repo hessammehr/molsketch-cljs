@@ -146,3 +146,7 @@
       (-> state
         (add-node n m)
         (add-bond b m)))))
+
+(defn active [state]
+  (get-in state [:status :hovered]
+          (get-in state [:status :selected])))
