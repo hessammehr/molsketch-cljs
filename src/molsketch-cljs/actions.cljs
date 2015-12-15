@@ -1,9 +1,10 @@
 (ns molsketch-cljs.actions
-  (:require [molsketch-cljs.core :refer [app-state]]
-            [molsketch-cljs.functional :refer [sprout-bond]]))
+  (:require [molsketch-cljs.functional :refer [sprout-bond]]))
 
-(defn sprout-from-hovered-or-selected []
-  (if-let [[_ n-id] (get-in @app-state [:status :hovered])]
-    (swap! app-state sprout-bond n-id)
-    (when-let [[_ n-id] (get-in @app-state [:status :selected])]
-      (swap! app-state sprout-bond n-id))))
+(def keymap
+  {\0
+   (fn [state]
+     (if-let [[_ n-id] (get-in @state [:status :hovered])]
+       (swap! state sprout-bond n-id)
+       (when-let [[_ n-id] (get-in @state [:status :selected])]
+         (swap! state sprout-bond n-id))))})

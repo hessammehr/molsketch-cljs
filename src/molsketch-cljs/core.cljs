@@ -2,19 +2,18 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [molsketch-cljs.components :as cmp]
             [molsketch-cljs.constants :refer [node-click-radius hover-radius
-                                              min-drag-radius keymap
+                                              min-drag-radius
                                               editor-dimensions]]
             [molsketch-cljs.util :refer [distance clip-line max-node
                                          parse-mouse-event parse-keyboard-event]]
             [molsketch-cljs.functional
-             :refer [sprout-bond add-free-node add-molecule
-                     get-bonds nodes-within prepare node-inside]]))
+             :refer [add-free-node add-molecule
+                     get-bonds nodes-within prepare node-inside]]
+            [molsketch-cljs.actions :refer [keymap]]))
 
 (enable-console-print!)
 
 (declare node-click)
-;  bond margin clip-line distance-squared distance canvas-click)
-
 
 (defonce app-state
   (atom {:nodes
@@ -38,7 +37,6 @@
 (defn normal-click [{x :x y :y}]
   (if-let [n (node-inside @app-state [x y] node-click-radius)]
     (node-click n)
-    ;; (swap! app-state add-free-node {:pos [x y]})
     (swap! app-state assoc-in [:status :selected] nil)))
 
 (defn do-drag [{x :x y :y}]
@@ -73,7 +71,8 @@
     (cond
       (nil? f) (swap! app-state assoc-in [:status :key-seq] [])
       (map? f) (swap! app-state assoc-in [:status :key-seq] key-seq)
-      :else (do (f) (swap! app-state assoc-in [:status :key-seq] [])))))
+      :else (do (f app-state)
+                (swap! app-state assoc-in [:status :key-seq] [])))))
 
 (defn editor []
   (let [{molecules :molecules :as state} (prepare @app-state)]
