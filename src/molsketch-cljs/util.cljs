@@ -46,4 +46,4 @@
    :button (aget ev "button")})
 
 (defn parse-keyboard-event [ev]
-  {:key (aget ev "key")})
+  {:key (first (aget ev "key"))})

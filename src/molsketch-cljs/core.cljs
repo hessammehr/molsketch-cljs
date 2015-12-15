@@ -2,7 +2,8 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [molsketch-cljs.components :as cmp]
             [molsketch-cljs.constants :refer [node-click-radius hover-radius
-                                              min-drag-radius editor-dimensions]]
+                                              min-drag-radius keymap
+                                              editor-dimensions]]
             [molsketch-cljs.util :refer [distance clip-line max-node
                                          parse-mouse-event parse-keyboard-event]]
             [molsketch-cljs.functional
@@ -17,21 +18,21 @@
 
 (defonce app-state
   (atom {:nodes
-          { 0 {:pos [65 30] :id 0 :elem :P}
-            1 {:pos [90 50] :id 1}
-            2 {:pos [90 80] :id 2 :elem :O}}
+          { 0 {:pos [65 30] :elem :P}
+            1 {:pos [90 50]}
+            2 {:pos [90 80] :elem :O}}
          :bonds
-          { 0 {:nodes #{0 1} :id 0}
-            1 {:nodes #{1 2} :id 1}}
+          { 0 {:nodes #{0 1}}
+            1 {:nodes #{1 2}}}
          :molecules
-          { 0 {:nodes #{0 1 2} :bonds #{0 1} :id 0}}
-         :status {:mode :normal :mouse nil}}))
+          { 0 {:nodes #{0 1 2} :bonds #{0 1}}}
+         :status {:mode :normal :mouse nil :key-seq []}}))
 
 (defn node-click [node-id]
   (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
 
 (defn normal-mouse-move [{x :x y :y}]
-  (let [n (node-inside @app-state [x y] hover-radius)]
+  (when-let [n (node-inside @app-state [x y] hover-radius)]
     (swap! app-state assoc-in [:status :hovered] (when n [:nodes n]))))
 
 (defn normal-click [{x :x y :y}]
@@ -66,9 +67,13 @@
       (do-drag parsed))))
 
 (defn key-press [ev]
-  (let [{key :key} (parse-keyboard-event ev)]
-    (when-let [[_ n-id] (get-in @app-state [:status :hovered])]
-      (swap! app-state sprout-bond n-id))))
+  (let [{k :key} (parse-keyboard-event ev)
+        key-seq (conj (get-in @app-state [:status :key-seq]) k)
+        f (get-in keymap key-seq)]
+    (cond
+      (nil? f) (swap! app-state assoc-in [:status :key-seq] [])
+      (map? f) (swap! app-state assoc-in [:status :key-seq] key-seq)
+      :else (do (f) (swap! app-state assoc-in [:status :key-seq] [])))))
 
 (defn editor []
   (let [{molecules :molecules :as state} (prepare @app-state)]
