@@ -82,6 +82,7 @@
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))
 
+(aset js/document "onkeydown" key-press)
 
 (defn on-js-reload []
-  (aset js/document "onkeydown" key-press))
+  )
