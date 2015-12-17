@@ -6,6 +6,8 @@
                                               fuse-tolerance]]
             [clojure.set :refer [difference]]))
 
+(declare nodes-within delete-bond)
+
 (defn add-class [node class]
   (update node :class str " " class))
 
@@ -28,10 +30,7 @@
     first))
 
 (defn node-inside [state point radius]
-  (let [n (nearest-node state point)
-        pos (get-in state [:nodes n :pos])
-        d (distance pos point)]
-    (when (< d radius) n)))
+  (first (nodes-within state point 0 radius)))
 
 (defn nodes-within [state point radius tol]
   (let [ks (keys (:nodes state))
@@ -150,3 +149,11 @@
 (defn active [state]
   (get-in state [:status :hovered]
           (get-in state [:status :selected])))
+
+(defn delete-node [state node-id]
+  (let [bs (get-bonds state node-id)
+        state (update state :nodes dissoc node-id)]
+    (reduce delete-bond state bs)))
+
+(defn delete-bond [state bond-id]
+  (update state :bonds dissoc bond-id))

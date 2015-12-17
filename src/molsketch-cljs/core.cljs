@@ -31,7 +31,7 @@
   (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
 
 (defn normal-mouse-move [{x :x y :y}]
-  (when-let [n (node-inside @app-state [x y] hover-radius)]
+  (let [n (node-inside @app-state [x y] hover-radius)]
     (swap! app-state assoc-in [:status :hovered] (when n [:nodes n]))))
 
 (defn normal-click [{x :x y :y}]
