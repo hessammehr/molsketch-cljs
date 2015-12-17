@@ -8,7 +8,7 @@
                                          parse-mouse-event parse-keyboard-event]]
             [molsketch-cljs.functional
              :refer [add-free-node add-molecule
-                     get-bonds nodes-within prepare node-inside]]
+                     get-bonds nodes-within node-inside]]
             [molsketch-cljs.actions :refer [keymap]]))
 
 (enable-console-print!)
@@ -75,12 +75,12 @@
                 (swap! app-state assoc-in [:status :key-seq] [])))))
 
 (defn editor []
-  (let [{molecules :molecules :as state} (prepare @app-state)]
+  (let [{molecules :molecules :as state} @app-state]
     [:div.editor {:on-key-down key-press}
       [:svg {:on-mouse-up mouse-up :on-mouse-move mouse-move
              :on-mouse-down mouse-down}
-       (doall (for [[id m] molecules]
-                ^{:key (str "m" id)}(cmp/molecule state m)))]
+       (for [[id m] molecules]
+         ^{:key (str "m" id)}[cmp/molecule state m])]
       [:p (str (:status state))]]))
 
 (reagent/render-component [editor]

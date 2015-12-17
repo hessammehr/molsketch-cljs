@@ -1,8 +1,10 @@
 (ns molsketch-cljs.components
   (:require [molsketch-cljs.util :refer [clip-line]]
-            [molsketch-cljs.constants :refer [node-radius margin]]))
+            [molsketch-cljs.constants :refer [node-radius margin
+                                              hover-marker-radius
+                                              selection-marker-radius]]))
 
-(declare node bond)
+(declare node bond hover-marker selection-marker)
 
 ;; (defn molecule [state {nodes :nodes bonds :bonds}]
 ;;   (concat
@@ -12,11 +14,23 @@
 ;;             ^{:key (str "b" id)}[bond state b])))
 
 (defn molecule [state mol]
-  (concat
+  [:g {}
    (for [[id n] (:nodes state)]
      ^{:key (str "n" id)}[node state n])
    (for [[id b] (:bonds state)]
-     ^{:key (str "b" id)}[bond state b])))
+     ^{:key (str "b" id)}[bond state b])
+   [hover-marker state]
+   [selection-marker state]])
+
+(defn hover-marker [state]
+  (when-let [hovered (get-in state [:status :hovered])]
+    (let [[x y] (get-in state (conj hovered :pos))]
+      [:circle {:cx x :cy y :r hover-marker-radius :class "hover-marker"}])))
+
+(defn selection-marker [state]
+  (when-let [selected (get-in state [:status :selected])]
+    (let [[x y] (get-in state (conj selected :pos))]
+      [:circle {:cx x :cy y :r selection-marker-radius :class "selection-marker"}])))
 
 (defn node [state n]
   (let [{[x y] :pos elem :elem class :class} n]

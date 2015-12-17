@@ -12,5 +12,12 @@ body {background-color: white;}
 
 circle {stroke-width: 0;}
 
-.hovered {fill: lightblue;}
-.selected {fill: red;}
+.hover-marker {
+    fill: blue;
+    opacity: 0.3;
+}
+
+.selection-marker {
+    fill: red;
+    opacity: 0.5;
+}

@@ -11,18 +11,6 @@
 (defn add-class [node class]
   (update node :class str " " class))
 
-(defn prepare-selected [state]
-  (if-let [x (get-in state [:status :selected])]
-    (update-in state x add-class "selected")
-    state))
-
-(defn prepare-hovered [state]
-  (if-let [x (get-in state [:status :hovered])]
-    (update-in state x add-class "hovered")
-    state))
-
-(def prepare (comp prepare-hovered prepare-selected))
-
 (defn nearest-node [state point]
   (->> state
     :nodes
