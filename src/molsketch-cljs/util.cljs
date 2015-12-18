@@ -29,8 +29,6 @@
 (defn displacement [[x1 y1] [x2 y2]]
   [(- x2 x1) (- y2 y1)])
 
-(defn add-vectors [vs])
-
 (defn normalize [[x y] len]
   (let [m (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))]
     [(/ (* x len) m) (/ (* y len) m)]))
@@ -47,3 +45,10 @@
 
 (defn parse-keyboard-event [ev]
   {:key (char (aget ev "keyCode"))})
+
+(defn distance-node [node point]
+  (distance (:pos node) point))
+
+(defn distance-bond [bond point]
+  (let [[p1 p2]
+        unit-along (normalize )]))
