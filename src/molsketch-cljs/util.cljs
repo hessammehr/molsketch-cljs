@@ -38,6 +38,14 @@
       [(- (* x (Math/cos t)) (* y (Math/sin t)))
        (+ (* x (Math/sin t)) (* y (Math/cos t)))]))
 
+; Matrix multiply with sqrt(1-a^2)     -a
+;                           a       sqrt(1-a^2)
+; representing a general rotation smaller than 90 degrees
+(defn rotation-like [[x y] a]
+  (let [A (Math/sqrt (- 1 (* a a)))]
+    [(+ (* x A) (* y (- a)))
+     (+ (* x a) (* y A))]))
+
 (defn parse-mouse-event [ev]
   {:x (- (aget ev "pageX") 8)
    :y (- (aget ev "pageY") 8)
@@ -49,6 +57,14 @@
 (defn distance-node [node point]
   (distance (:pos node) point))
 
-(defn distance-bond [bond point]
-  (let [[p1 p2]
-        unit-along (normalize )]))
+(defn distance-line [a b [x y]]
+  (/ (+ b (* a x) (- y))
+     (Math/sqrt (+ 1 (* a a)))))
+
+(defn distance-bond [state bond-id point]
+  (let [node-ids (get-in state [:bonds bond-id :nodes])
+        [[x1 y1] [x2 y2]] (map #(get-in state [:nodes % :pos]) node-ids)
+        a (/ (- y2 y1) (- x2 x1))
+        g (/ a (Math/sqrt (+ 1 (* a a))))
+        [[x1 y1] [x2 y2] [x y]] (map #(rotation-like # g) [[x1 y1] [x2 y2] point])]
+    [[x1 y1] [x2 y2] [x y]]))
