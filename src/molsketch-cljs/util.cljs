@@ -57,14 +57,16 @@
 (defn distance-node [node point]
   (distance (:pos node) point))
 
-(defn distance-line [a b [x y]]
-  (/ (+ b (* a x) (- y))
-     (Math/sqrt (+ 1 (* a a)))))
+(defn distance-line-section [[x1 y1] [x2 y2] point]
+  (let [a (/ (- y2 y1) (- x2 x1))
+        g (/ a (Math/sqrt (+ 1 (* a a))))
+        [[x1 y1] [x2 y2] [x y]] (map #(rotation-like % (- g)) [[x1 y1] [x2 y2] point])]
+    (cond
+      (or (< x (min x1 x2)) (> x (max x1 x2)))
+      (min (distance [x y] [x1 y1]) (distance [x y] [x2 y2]))
+      :else (.abs js.Math (- y y2)))))
 
 (defn distance-bond [state bond-id point]
   (let [node-ids (get-in state [:bonds bond-id :nodes])
-        [[x1 y1] [x2 y2]] (map #(get-in state [:nodes % :pos]) node-ids)
-        a (/ (- y2 y1) (- x2 x1))
-        g (/ a (Math/sqrt (+ 1 (* a a))))
-        [[x1 y1] [x2 y2] [x y]] (map #(rotation-like # g) [[x1 y1] [x2 y2] point])]
-    [[x1 y1] [x2 y2] [x y]]))
+        [p1 p2] (map #(get-in state [:nodes % :pos]) node-ids)]
+    (distance-line-section p1 p2 point)))
