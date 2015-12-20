@@ -1,10 +1,12 @@
 (ns molsketch-cljs.functional
   (:require [molsketch-cljs.util
              :refer [max-node max-bond max-molecule displacement
-                     normalize distance rotate]]
+                     normalize distance rotate map-in translate
+                     invert remap-bonds remap-nodes]]
             [molsketch-cljs.constants :refer [bond-length
                                               fuse-tolerance]]
-            [clojure.set :refer [difference]]))
+            [clojure.set :refer [difference]]
+            [molsketch-cljs.templates :refer [templates]]))
 
 (declare nodes-within delete-bond)
 
@@ -13,9 +15,9 @@
 
 (defn nearest-node [state point]
   (->> state
-    :nodes
-    (apply min-key #(distance point (:pos (second %))))
-    first))
+       :nodes
+       (apply min-key #(distance point (:pos (second %))))
+       first))
 
 (defn node-inside [state point radius]
   (first (nodes-within state point 0 radius)))
@@ -34,8 +36,8 @@
 
 (defn add-node [state node mol-id]
   (-> state
-    (assoc-in [:nodes (:id node)] node)
-    (update-in [:molecules mol-id :nodes] conj (:id node))))
+      (assoc-in [:nodes (:id node)] node)
+      (update-in [:molecules mol-id :nodes] conj (:id node))))
 
 (defn new-molecule [state mol-props]
   (let [id (inc (max-molecule state))
@@ -50,22 +52,22 @@
   (let [n (new-node state node-props)
         m (new-molecule state {:nodes #{(:id n)}})]
     (-> state
-      (add-molecule m)
-      (add-node n (:id m)))))
+        (add-molecule m)
+        (add-node n (:id m)))))
 
 
 (defn get-bonds [state node-id]
   (->> (:bonds state)
-    (keep (fn [[b-id {nodes :nodes}]]
-            (when (nodes node-id) b-id)))
-    (into #{})))
+       (keep (fn [[b-id {nodes :nodes}]]
+               (when (nodes node-id) b-id)))
+       (into #{})))
 
 (defn connected [state node-id]
   (->> (get-bonds state node-id)
-    (map #(get-in state [:bonds % :nodes]))
-    (map #(disj % node-id))
-    (map first)
-    (into #{})))
+       (map #(get-in state [:bonds % :nodes]))
+       (map #(disj % node-id))
+       (map first)
+       (into #{})))
 
 (defn node-displacement [state n1-id n2-id]
   (let [nodes (:nodes state)
@@ -75,17 +77,17 @@
 
 (defn find-molecule [state node-id]
   (->> (:molecules state)
-    (keep (fn [[m-id {nodes :nodes}]]
-            (when (nodes node-id) m-id)))
-    first))
+       (keep (fn [[m-id {nodes :nodes}]]
+               (when (nodes node-id) m-id)))
+       first))
 
 (defn new-bond [state bond-props]
   (assoc bond-props :id (inc (max-bond state))))
 
 (defn add-bond [state b mol-id]
   (-> state
-    (assoc-in [:bonds (:id b)] b)
-    (update-in [:molecules mol-id :bonds] conj (:id b))))
+      (assoc-in [:bonds (:id b)] b)
+      (update-in [:molecules mol-id :bonds] conj (:id b))))
 
 (defn fusion-candidates [state node-id]
   (let [pos (get-in state [:nodes node-id :pos])
@@ -97,24 +99,24 @@
   (if (= m1-id m2-id) state
       (let [m2 (get-in state [:molecules m1-id])]
         (-> state
-          (update-in [:molecules m1-id :bonds]
-            into (:bonds m2))
-          (update-in [:molecules m1-id :nodes]
-            into (:nodes m2))
-          (dissoc m2-id)))))
+            (update-in [:molecules m1-id :bonds]
+                       into (:bonds m2))
+            (update-in [:molecules m1-id :nodes]
+                       into (:nodes m2))
+            (dissoc m2-id)))))
 
 (defn connect [state n1-id n2-id]
   (let [b (new-bond state {:nodes #{n1-id n2-id}})
         m1 (find-molecule state n1-id)
         m2 (find-molecule state n2-id)]
     (-> state
-      (join-molecules m1 m2)
-      (add-bond b m1))))
+        (join-molecules m1 m2)
+        (add-bond b m1))))
 
 (defn sprout-position [state node-id]
   (let [cur-pos (get-in state [:nodes node-id :pos])
         vecs (map (partial node-displacement state node-id)
-               (connected state node-id))
+                  (connected state node-id))
         sum (apply map + vecs)
         new-dir (map - sum)
         new-dir (case (count vecs)
@@ -131,8 +133,8 @@
           b (new-bond state {:nodes #{node-id (:id n)}})
           m (find-molecule state node-id)]
       (-> state
-        (add-node n m)
-        (add-bond b m)))))
+          (add-node n m)
+          (add-bond b m)))))
 
 (defn active [state]
   (get-in state [:status :hovered]
@@ -145,3 +147,23 @@
 
 (defn delete-bond [state bond-id]
   (update state :bonds dissoc bond-id))
+
+(defn graft [state template at]
+  (let [min-node-id (inc (max-node state))
+        min-bond-id (inc (max-bond state))
+        template-node-ids (keys (:nodes template))
+        template-bond-ids (keys (:bonds template))
+        node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
+        bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
+        root (get-in template (:root template))
+        translation (map + (invert (:pos root))
+                 [100 100])
+        template (-> template
+                     (translate translation)
+                     (remap-nodes node-mapping)
+                     (remap-bonds bond-mapping))
+        ]
+    (println translation)
+    (merge-with merge state (dissoc template :root))
+    ))
+

@@ -15,7 +15,7 @@
     (Math/pow (- y1 y2) 2)))
 
 (defn distance [p1 p2]
-  (Math.sqrt (distance-squared p1 p2)))
+  (Math/sqrt (distance-squared p1 p2)))
 
 (defn max-node [state]
   (apply max (keys (:nodes state))))
@@ -32,6 +32,8 @@
 (defn normalize [[x y] len]
   (let [m (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))]
     [(/ (* x len) m) (/ (* y len) m)]))
+
+
 
 (defn rotate [[x y] degrees]
   (let [t (/ (* degrees (.-PI js/Math)) 180)]
@@ -70,3 +72,23 @@
   (let [node-ids (get-in state [:bonds bond-id :nodes])
         [p1 p2] (map #(get-in state [:nodes % :pos]) node-ids)]
     (distance-line-section p1 p2 point)))
+
+(defn map-in [coll loc mapping]
+  (update-in coll loc (fn [v] (into (empty v)
+                                    (map mapping v)))))
+
+(defn remap-nodes [fragment node-mapping]
+  (-> fragment
+      (map-in [:nodes] (fn [[n-id n]] [(node-mapping n-id) n]))
+      (map-in [:bonds] (fn [[b-id b]] [b-id (map-in b [:nodes] node-mapping)]))))
+
+
+(defn remap-bonds [fragment bond-mapping]
+  (map-in fragment [:bonds] (fn [[b-id b]] [(bond-mapping b-id) b])))
+
+(defn translate [fragment v]
+  (map-in fragment [:nodes]
+          (fn [[n-id n]] [n-id (update n :pos (partial mapv + v))])))
+
+(defn invert [v]
+  (mapv - v))
