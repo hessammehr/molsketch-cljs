@@ -156,14 +156,14 @@
         node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
         bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
         root (get-in template (:root template))
-        translation (map + (invert (:pos root))
-                 [100 100])
+        translation (mapv + (invert (:pos root))
+                 (get-in state [:nodes at :pos]))
         template (-> template
                      (translate translation)
                      (remap-nodes node-mapping)
                      (remap-bonds bond-mapping))
         ]
-    (println translation)
+    (println at)
     (merge-with merge state (dissoc template :root))
     ))
 
