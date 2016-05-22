@@ -86,9 +86,24 @@
 (defn remap-bonds [fragment bond-mapping]
   (map-in fragment [:bonds] (fn [[b-id b]] [(bond-mapping b-id) b])))
 
+
 (defn translate [fragment v]
   (map-in fragment [:nodes]
           (fn [[n-id n]] [n-id (update n :pos (partial mapv + v))])))
 
 (defn invert [v]
   (mapv - v))
+
+(defn dissoc-in
+  "Dissociates an entry from a nested associative structure returning a new
+  nested structure. keys is a sequence of keys. Any empty maps that result
+  will not be present in the new structure."
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+(dissoc m k)))

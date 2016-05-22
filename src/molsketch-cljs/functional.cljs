@@ -2,7 +2,7 @@
   (:require [molsketch-cljs.util
              :refer [max-node max-bond max-molecule displacement
                      normalize distance rotate map-in translate
-                     invert remap-bonds remap-nodes]]
+                     invert remap-bonds remap-nodes dissoc-in]]
             [molsketch-cljs.constants :refer [bond-length
                                               fuse-tolerance]]
             [clojure.set :refer [difference]]
@@ -153,17 +153,19 @@
         min-bond-id (inc (max-bond state))
         template-node-ids (keys (:nodes template))
         template-bond-ids (keys (:bonds template))
+        [typ root] (:root template)
         node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
+        node-mapping (assoc node-mapping root at)
         bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
-        root (get-in template (:root template))
-        translation (mapv + (invert (:pos root))
-                 (get-in state [:nodes at :pos]))
+        translation (mapv + (invert (get-in template [typ root :pos]))
+                        (get-in state [:nodes at :pos]))
         template (-> template
+                     (dissoc :root)
+                     (dissoc-in (:root template))
                      (translate translation)
                      (remap-nodes node-mapping)
-                     (remap-bonds bond-mapping))
-        ]
-    (println at)
-    (merge-with merge state (dissoc template :root))
+                     (remap-bonds bond-mapping))]
+    (println node-mapping bond-mapping translation template (translate template [50 50]))
+    (merge-with merge state template)
     ))
 
