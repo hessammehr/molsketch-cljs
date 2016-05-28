@@ -77,23 +77,6 @@
   (update-in coll loc (fn [v] (into (empty v)
                                     (map mapping v)))))
 
-(defn remap-nodes [fragment node-mapping]
-  (-> fragment
-      (map-in [:nodes] (fn [[n-id n]] [(node-mapping n-id) n]))
-      (map-in [:bonds] (fn [[b-id b]] [b-id (map-in b [:nodes] node-mapping)]))))
-
-
-(defn remap-bonds [fragment bond-mapping]
-  (map-in fragment [:bonds] (fn [[b-id b]] [(bond-mapping b-id) b])))
-
-
-(defn translate [fragment v]
-  (map-in fragment [:nodes]
-          (fn [[n-id n]] [n-id (update n :pos (partial mapv + v))])))
-
-(defn invert [v]
-  (mapv - v))
-
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
   nested structure. keys is a sequence of keys. Any empty maps that result
