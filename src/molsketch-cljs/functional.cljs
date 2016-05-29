@@ -1,7 +1,8 @@
 (ns molsketch-cljs.functional
   (:require [molsketch-cljs.util
              :refer [max-node max-bond max-molecule displacement
-                     normalize distance dissoc-in rotate]]
+                     normalize distance dissoc-in rotate invert
+                     angle]]
             [molsketch-cljs.fragment :as frag]
             [molsketch-cljs.constants :refer [bond-length
                                               fuse-tolerance]]
@@ -113,16 +114,19 @@
         (join-molecules m1 m2)
         (add-bond b m1))))
 
+(defn sprout-direction [state node-id]
+  (let [vecs (map (partial node-displacement state node-id)
+               (connected state node-id))
+        sum (apply map + vecs)
+        new-dir (invert sum)]
+    (case (count vecs)
+      0 (rotate [1 0] -30)
+      1 (rotate new-dir 60)
+      new-dir)))
+
 (defn sprout-position [state node-id]
   (let [cur-pos (get-in state [:nodes node-id :pos])
-        vecs (map (partial node-displacement state node-id)
-                  (connected state node-id))
-        sum (apply map + vecs)
-        new-dir (map - sum)
-        new-dir (case (count vecs)
-                  0 (rotate [1 0] -30)
-                  1 (rotate new-dir 60)
-                  new-dir)]
+        new-dir (sprout-direction state node-id)]
     (mapv + cur-pos (normalize new-dir bond-length))))
 
 (defn sprout-bond [state node-id]
@@ -154,19 +158,18 @@
         template-node-ids (keys (:nodes template))
         template-bond-ids (keys (:bonds template))
         [typ root] (:root template)
+        root-pos (get-in template [typ root :pos])
+        graft-pos (get-in state [:nodes at :pos])
+        graft-dir (sprout-direction state at)
         node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
         node-mapping (assoc node-mapping root at)
         bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
-        a (println node-mapping bond-mapping)
-        translation (mapv + (frag/invert (get-in template [typ root :pos]))
-                        (get-in state [:nodes at :pos]))
+        translation (mapv + (invert root-pos) graft-pos)
         template (-> template
                      (dissoc :root)
                      (dissoc-in (:root template))
+                     (frag/rotate (angle graft-dir) root-pos)
                      (frag/translate translation)
-                     (frag/remap-nodes node-mapping)
-                     (frag/remap-bonds bond-mapping))]
-    (println node-mapping bond-mapping translation template)
-    (merge-with merge state template)
-    ))
-
+                     (frag/remap node-mapping bond-mapping))]
+    (println graft-dir (angle graft-dir))
+    (merge-with merge state template)))

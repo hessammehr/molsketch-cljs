@@ -33,20 +33,44 @@
   (let [m (Math/sqrt (+ (Math/pow x 2) (Math/pow y 2)))]
     [(/ (* x len) m) (/ (* y len) m)]))
 
+(defn invert [v]
+  (mapv - v))
 
+(defn angle [[x y]]
+  (let [y (- y)
+        a (Math/atan (/ y x))
+        a (if (pos? x) a (+ a (.-PI js/Math)))]
+    (/ (* a 180) (.-PI js/Math))))
 
-(defn rotate [[x y] degrees]
-  (let [t (/ (* degrees (.-PI js/Math)) 180)]
-      [(- (* x (Math/cos t)) (* y (Math/sin t)))
-       (+ (* x (Math/sin t)) (* y (Math/cos t)))]))
+(defn rotate
+  ([[x y] degrees]
+   (let [t (/ (* degrees (.-PI js/Math)) 180)]
+     [(- (* x (Math/cos t)) (* y (Math/sin t)))
+      (+ (* x (Math/sin t)) (* y (Math/cos t)))]))
+  ([[x y] degrees [cx cy]]
+   (mapv + [cx cy]
+     (rotate [(- x cx) (- y cy)] degrees))))
+
+#_(defn unitary-xform
+  [[x y] a & {:keys [[ox oy] :as origin sign] :or {origin [0 0] sign 1}}]
+  (let [A (* (Math/sign sign) (Math/sqrt (- 1 (* a a))))
+        [X Y] (mapv - [x y] origin)]
+    (mapv + origin
+      [(+ (* X A) (* Y (- a)))
+      (+ (* X a) (* Y A))])))
 
 ; Matrix multiply with sqrt(1-a^2)     -a
 ;                           a       sqrt(1-a^2)
-; representing a general rotation smaller than 90 degrees
-(defn rotation-like [[x y] a]
-  (let [A (Math/sqrt (- 1 (* a a)))]
-    [(+ (* x A) (* y (- a)))
-     (+ (* x a) (* y A))]))
+; representing a general rotation smaller than >-90 and <90 degrees
+(defn rotation-like
+  ([[x y] a]
+   (let [A (Math/sqrt (- 1 (* a a)))]
+     [(+ (* x A) (* y (- a)))
+      (+ (* x a) (* y A))]))
+  ([[x y] a origin]
+   (let [[ox oy] origin]
+     (mapv + origin
+       (rotation-like [(- x ox) (- y oy)] a)))))
 
 (defn parse-mouse-event [ev]
   {:x (- (aget ev "pageX") 8)
@@ -62,11 +86,12 @@
 (defn distance-line-section [[x1 y1] [x2 y2] point]
   (let [a (/ (- y2 y1) (- x2 x1))
         g (/ a (Math/sqrt (+ 1 (* a a))))
-        [[x1 y1] [x2 y2] [x y]] (map #(rotation-like % (- g)) [[x1 y1] [x2 y2] point])]
+        [[x1 y1] [x2 y2] [x y]]
+        (map #(rotation-like % (- g)) [[x1 y1] [x2 y2] point])]
     (cond
       (or (< x (min x1 x2)) (> x (max x1 x2)))
       (min (distance [x y] [x1 y1]) (distance [x y] [x2 y2]))
-      :else (.abs js.Math (- y y2)))))
+      :else (.abs js/Math (- y y2)))))
 
 (defn distance-bond [state bond-id point]
   (let [node-ids (get-in state [:bonds bond-id :nodes])

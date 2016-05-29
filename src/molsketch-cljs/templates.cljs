@@ -6,7 +6,7 @@
   (let [theta (/ (* 2 (.-PI js/Math)) n)
         r (/ const/bond-length (Math.sqrt (* 2 (- 1 (Math/cos theta)))))
         nodes (into {} (for [a (range n) :let [t (* a theta)]]
-                         [a {:pos [(* r (Math/cos t)) (* r (Math/sin t))]}]))
+                         [a {:pos [(- (* r (Math/cos t))) (* r (Math/sin t))]}]))
         bonds (into {(dec n) {:nodes #{0 (dec n)}}} ; closing bond
                     (for [b (range (dec n))]
                          [b {:nodes #{b (inc b)}}]))]
