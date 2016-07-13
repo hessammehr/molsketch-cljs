@@ -36,7 +36,21 @@
                 :compiler {:output-to "resources/public/js/compiled/molsketch-cljs.js"
                            :main molsketch-cljs.core
                            :optimizations :advanced
-                           :pretty-print false}}]}
+                           :pretty-print false}}
+               {:id "test"
+                 :source-paths ["src" "test/cljs"]
+                 :figwheel {:on-jsload "molsketch-cljs.core-test/on-js-reload"}
+
+                 :compiler {:main molsketch-cljs.core-test
+                            :asset-path "js/compiled/test/out"
+                            :output-to "resources/public/js/compiled/test/test.js"
+                            :output-dir "resources/public/js/compiled/test/out"
+                            :source-map true
+                            :cache-analysis true
+                            :optimizations :none
+                            :source-map-timestamp true}}]}
+
+
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default
