@@ -1,13 +1,17 @@
 (ns molsketch-cljs.functional
+  (:require-macros [com.rpl.specter.macros
+                    :refer [select transform]])
   (:require [molsketch-cljs.util
              :refer [max-node max-bond max-molecule displacement
-                     normalize distance dissoc-in rotate invert
-                     angle]]
+                     normalize distance rotate invert
+                     angle rotator-from-to
+                     translator-from-to]]
             [molsketch-cljs.fragment :as frag]
             [molsketch-cljs.constants :refer [bond-length
                                               fuse-tolerance]]
             [clojure.set :refer [difference]]
-            [molsketch-cljs.templates :refer [templates]]))
+            [molsketch-cljs.templates :refer [templates]]
+            [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
 
 (declare nodes-within delete-bond)
 
@@ -152,24 +156,47 @@
 (defn delete-bond [state bond-id]
   (update state :bonds dissoc bond-id))
 
-(defn graft [state template at]
-  (let [min-node-id (inc (max-node state))
-        min-bond-id (inc (max-bond state))
-        template-node-ids (keys (:nodes template))
-        template-bond-ids (keys (:bonds template))
-        [typ root] (:root template)
-        root-pos (get-in template [typ root :pos])
-        graft-pos (get-in state [:nodes at :pos])
-        graft-dir (sprout-direction state at)
-        node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
-        node-mapping (assoc node-mapping root at)
-        bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
-        translation (mapv + (invert root-pos) graft-pos)
-        template (-> template
-                     (dissoc :root)
-                     (dissoc-in (:root template))
-                     (frag/rotate (angle graft-dir) root-pos)
-                     (frag/translate translation)
-                     (frag/remap node-mapping bond-mapping))]
-    (println graft-dir (angle graft-dir))
-    (merge-with merge state template)))
+; (defn graft [state template at]
+;   (let [min-node-id (inc (max-node state))
+;         min-bond-id (inc (max-bond state))
+;         template-node-ids (keys (:nodes template))
+;         template-bond-ids (keys (:bonds template))
+;         roots (:roots template)
+;         root-pos (get-in template [typ root :pos])
+;         graft-pos (get-in state [:nodes at :pos])
+;         graft-dir (sprout-direction state at)
+;         node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
+;         node-mapping (assoc node-mapping root at)
+;         bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
+;         translation (mapv + (invert root-pos) graft-pos)
+;         template (-> template
+;                      (dissoc :roots)
+;                      (dissoc-in (:root template))
+;                      (frag/rotate (angle graft-dir) root-pos)
+;                      (frag/translate translation)
+;                      (frag/remap node-mapping bond-mapping))]
+;     (println graft-dir (angle graft-dir))
+;     (merge-with merge state template)))
+
+(defmulti graft (fn [state template at] (first at)))
+
+; Graft onto bond
+(defmethod graft :bonds [state template at])
+; Graft at node
+(defmethod graft :nodes [state template [_ node-id]]
+  (let [node-shift #(+ % (inc (max-node state)))
+        bond-shift #(+ % (inc (max-bond state)))
+        sprout-dir (sprout-direction state node-id)
+        graft-dir (:graft-dir template)
+        graft-pos (sprout-position state node-id)
+        root-pos (get-in template [:nodes node-id :pos])
+        translation1 (translator-from-to root-pos [0 0])
+        translation2 (translator-from-to [0 0] graft-pos)
+        rotation (rotator-from-to root-pos graft-dir)]
+    (->> template
+      (transform [:nodes ALL FIRST] node-shift)
+      (transform [:bonds MAP-VALS :nodes ALL] node-shift)
+      (transform [:bonds ALL FIRST] bond-shift)
+      (transform [:nodes MAP-VALS :pos] translation1)
+      (transform [:nodes MAP-VALS :pos] rotation)
+      (transform [:nodes MAP-VALS :pos] translation2))))

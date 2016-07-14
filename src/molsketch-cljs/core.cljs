@@ -15,17 +15,20 @@
 
 (declare node-click)
 
+(def blank-state
+  {:nodes
+      { 0 {:pos [65 30] :elem :P}
+        1 {:pos [90 50]}
+        2 {:pos [90 80] :elem :O}}
+   :bonds
+      { 0 {:nodes #{0 1}}
+        1 {:nodes #{1 2}}}
+   :molecules
+      { 0 {:nodes #{0 1 2} :bonds #{0 1}}
+        :status {:mode :normal :mouse nil :key-seq []}}})
+
 (defonce app-state
-  (atom {:nodes
-          { 0 {:pos [65 30] :elem :P}
-            1 {:pos [90 50]}
-            2 {:pos [90 80] :elem :O}}
-         :bonds
-          { 0 {:nodes #{0 1}}
-            1 {:nodes #{1 2}}}
-         :molecules
-          { 0 {:nodes #{0 1 2} :bonds #{0 1}}}
-         :status {:mode :normal :mouse nil :key-seq []}}))
+  (atom blank-state))
 
 (defn node-click [node-id]
   (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
@@ -89,4 +92,4 @@
 (aset js/document "onkeydown" key-press)
 
 (defn on-js-reload []
-  )
+  (.clear js/console))

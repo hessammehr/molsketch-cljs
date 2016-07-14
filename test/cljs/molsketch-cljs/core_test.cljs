@@ -1,6 +1,8 @@
 (ns molsketch-cljs.core-test
-  (:require-macros [com.rpl.specter.macros :refer [select]])
+  (:require-macros [com.rpl.specter.macros
+                    :refer [select select-first]])
   (:require
+   [molsketch-cljs.core :refer [blank-state]]
    [molsketch-cljs.functional :as fun]
    [molsketch-cljs.util :as util]
    [molsketch-cljs.fragment :as frag]
@@ -9,10 +11,18 @@
    [cljs.test :refer-macros [deftest testing is run-tests]]))
 
 
-(deftest test-fragment []
-  (let [f (tmplt/templates :cyclopropyl)]
-    (is (= [0 1 2] (select [:nodes ALL FIRST] f)))
-    (is (= 1 3))))
+(deftest test-fragment
+  (let [f (tmplt/templates :cyclopropyl)
+        n-mapping {0 5 1 8 2 9 3 4}
+        b-mapping {0 4 1 9 2 7 3 5}
+        fp (frag/remap f n-mapping b-mapping)
+        xform (util/rotator-from-to [1 0] [0 1])]
+    (is (= (into #{} (select [:nodes ALL FIRST] fp)) #{5 8 9}))
+    (is (= (into #{}(select [:bonds ALL FIRST] fp)) #{4 9 7}))
+    (is (= (:roots fp) #{[:nodes 5] [:bonds 4]}))
+    (is (= [-0.5 0.5] (xform [0.5 0.5])))
+    (is (= true (do (println (fun/graft blank-state f [:nodes 1]) true))))))
+
 
 (enable-console-print!)
 (run-tests)

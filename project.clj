@@ -39,7 +39,7 @@
                            :pretty-print false}}
                {:id "test"
                  :source-paths ["src" "test/cljs"]
-                ;  :figwheel {:on-jsload "molsketch-cljs.core-test/on-js-reload"}
+                 :figwheel {:on-jsload "molsketch-cljs.core-test/on-js-reload"}
 
                  :compiler {:main molsketch-cljs.core-test
                             :asset-path "js/compiled/test/out"

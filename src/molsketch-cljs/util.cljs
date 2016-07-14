@@ -52,12 +52,12 @@
      (rotate [(- x cx) (- y cy)] degrees))))
 
 #_(defn unitary-xform
-  [[x y] a & {:keys [[ox oy] :as origin sign] :or {origin [0 0] sign 1}}]
-  (let [A (* (Math/sign sign) (Math/sqrt (- 1 (* a a))))
-        [X Y] (mapv - [x y] origin)]
-    (mapv + origin
-      [(+ (* X A) (* Y (- a)))
-      (+ (* X a) (* Y A))])))
+   [[x y] a & {:keys [[ox oy] :as origin sign] :or {origin [0 0] sign 1}}]
+   (let [A (* (Math/sign sign) (Math/sqrt (- 1 (* a a))))
+         [X Y] (mapv - [x y] origin)]
+     (mapv + origin
+       [(+ (* X A) (* Y (- a)))
+        (+ (* X a) (* Y A))])))
 
 ; Matrix multiply with sqrt(1-a^2)     -a
 ;                           a       sqrt(1-a^2)
@@ -98,20 +98,37 @@
         [p1 p2] (map #(get-in state [:nodes % :pos]) node-ids)]
     (distance-line-section p1 p2 point)))
 
-(defn map-in [coll loc mapping]
-  (update-in coll loc (fn [v] (into (empty v)
-                                    (map mapping v)))))
+; (defn map-in [coll loc mapping]
+;   (update-in coll loc (fn [v] (into (empty v)
+;                                     (map mapping v)))))
 
-(defn dissoc-in
-  "Dissociates an entry from a nested associative structure returning a new
-  nested structure. keys is a sequence of keys. Any empty maps that result
-  will not be present in the new structure."
-  [m [k & ks :as keys]]
-  (if ks
-    (if-let [nextmap (get m k)]
-      (let [newmap (dissoc-in nextmap ks)]
-        (if (seq newmap)
-          (assoc m k newmap)
-          (dissoc m k)))
-      m)
-(dissoc m k)))
+; (defn dissoc-in
+;   "Dissociates an entry from a nested associative structure returning a new
+;   nested structure. keys is a sequence of keys. Any empty maps that result
+;   will not be present in the new structure."
+;   [m [k & ks :as keys]]
+;   (if ks
+;     (if-let [nextmap (get m k)]
+;       (let [newmap (dissoc-in nextmap ks)]
+;         (if (seq newmap)
+;           (assoc m k newmap)
+;           (dissoc m k)))
+;       m)
+;    (dissoc m k)))
+
+; Returns a unitary transformation that orients
+; [x1 y1] along [x2 y2] by rotation and scaling
+(defn rotator-from-to [[x1 y1] [x2 y2]]
+  (let [l1 (+ (* x1 x1) (* y1 y1))
+        l2 (+ (* x2 x2) (* y2 y2))
+        [x2 y2] (map #(* % (Math/sqrt (/ l1 l2)))
+                 [x2 y2]) ; rescale [x2 y2] to be the same length as [x1 y1]
+        a (/ (+ (* x1 x2) (* y1 y2)) l1)
+        b (/ (- (* x2 y1) (* x1 y2)) l1)]
+      (fn [[x y]] [(+ (* a x) (* b y)) (- (* a y) (* b x))])))
+
+; Returns a function xform [x y] -> [X Y] that
+; moves the point [x1 y1] to [x2 y2]
+(defn translator-from-to [[x1 y1] [x2 y2]]
+  (let [[vx vy] [(- x2 x1) (- y2 y1)]])
+  (fn [[x y]] [(+ x vx) (+ y vy)]))
