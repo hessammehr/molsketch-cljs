@@ -3,8 +3,8 @@
                     :refer [select transform]])
   (:require [molsketch-cljs.util
              :refer [max-node max-bond max-molecule displacement
-                     normalize distance rotate invert
-                     angle rotator-from-to
+                     normalize distance rotate-degrees invert
+                     angle xform-from-to
                      translator-from-to]]
             [molsketch-cljs.fragment :as frag]
             [molsketch-cljs.constants :refer [bond-length
@@ -124,8 +124,8 @@
         sum (apply map + vecs)
         new-dir (invert sum)]
     (case (count vecs)
-      0 (rotate [1 0] -30)
-      1 (rotate new-dir 60)
+      0 (rotate-degrees [1 0] -30)
+      1 (rotate-degrees new-dir 60)
       new-dir)))
 
 (defn sprout-position [state node-id]
@@ -192,7 +192,7 @@
         root-pos (get-in template [:nodes node-id :pos])
         translation1 (translator-from-to root-pos [0 0])
         translation2 (translator-from-to [0 0] graft-pos)
-        rotation (rotator-from-to root-pos graft-dir)]
+        rotation (xform-from-to root-pos graft-dir)]
     (->> template
       (transform [:nodes ALL FIRST] node-shift)
       (transform [:bonds MAP-VALS :nodes ALL] node-shift)

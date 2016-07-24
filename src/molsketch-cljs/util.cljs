@@ -1,7 +1,15 @@
 (ns molsketch-cljs.util)
 
-(declare distance distance-squared)
+(declare distance distance-squared matrix-transform)
 
+(defn degree-to-radian [deg]
+  (* Math/PI (/ deg 180)))
+
+(defn radian-to-degree [rad]
+  (* 180 (/ rad Math/PI)))
+
+;; Clip line section by radius clip1 on one side
+;; and clip2 on the other.
 (defn clip-line [[x1 y1] [x2 y2] clip1 clip2]
   (let [l (distance [x1 y1] [x2 y2])
         dx1 (/ (* clip1 (- x2 x1)) l)
@@ -10,7 +18,7 @@
         dy2 (/ (* clip2 (- y1 y2)) l)]
       [[(+ x1 dx1) (+ y1 dy1)] [(+ x2 dx2) (+ y2 dy2)]]))
 
-(defn len [x y]
+(defn len [[x y]]
   (+ (* x x)
      (* y y)))
 
@@ -37,7 +45,7 @@
   (let [a (/ (- y2 y1) (- x2 x1))
         g (/ a (Math/sqrt (+ 1 (* a a))))
         [[x1 y1] [x2 y2] [x y]]
-        (map #(rotation-like % (- g)) [[x1 y1] [x2 y2] point])]
+        (map #(matrix-transform % (- g) 1) [[x1 y1] [x2 y2] point])]
     (cond
       (or (< x (min x1 x2)) (> x (max x1 x2)))
       (min (distance [x y] [x1 y1]) (distance [x y] [x2 y2]))
@@ -63,39 +71,43 @@
         a (if (pos? x) a (+ a (.-PI js/Math)))]
     (/ (* a 180) (.-PI js/Math))))
 
+; Performs point transformation xform with the origin
+; set to [ox oy]
+(defn transform-with-origin [xform [x y] [ox oy]]
+  (let [[x y] (mapv - [x y] [ox oy])
+        [x y] (xform [x y])]
+    (mapv + [x y] [ox oy])))
+
 (defn translate [[x1 y1] [x2 y2]]
   [(+ x1 x2) (+ y1 y2)])
 
+; Note that the y axis points down in SVG, so rotations are count-clockwise.
 (defn rotate-degrees
-  ([[x y] degrees & {[ox oy] :origin :or {[ox oy] [0 0]}}]
-   (let [x (- x ox)
-         y (- y oy)
-         t (/ (* degrees (.-PI js/Math)) 180)]
-     [(+ ox (- (* x (Math/cos t)) (* y (Math/sin t))))
-      (+ oy (+ (* x (Math/sin t)) (* y (Math/cos t))))])))
+  [[x y] degrees]
+  (let [radians (degree-to-radian degrees)
+        a (Math/cos radians)
+        b (Math/sin radians)]
+     (matrix-transform [x y] a b)))
 
-; Matrix multiply with      sr     s*sqrt(1-r^2)
-;                     -s*sqrt(1-a^2)     sa
+; Matrix multiply with      a             b
+;                          -b             a
 ; representing a general rotation and scaling operation
 (defn matrix-transform
-  [[x y] r s & {[ox oy] :origin :or {[ox oy] 0 0}}
-   (let [x (- x ox)
-         y (- y oy)
-         a (* r s)
-         A (Math/sqrt (- (* s s) (* a a)))]
-     [(+ ox (+ (* x a) (* y A)))
-      (+ oy (- (* y a) (* x A)))])])
+  [[x y] a b]
+  [(+ (* x a) (* y b))
+   (- (* y a) (* x b))])
 
 ; Returns a unitary transformation that orients
-; [x1 y1] along [x2 y2] by rotation and scaling
-(defn xform-from-to [[x1 y1] [x2 y2]]
+; [x1 y1] along [x2 y2] by rotation.
+(defn orient-from-to [[x1 y1] [x2 y2]]
   (let [l1 (+ (* x1 x1) (* y1 y1))
         l2 (+ (* x2 x2) (* y2 y2))
-        [x2 y2] (map #(* % (Math/sqrt (/ l1 l2)))
-                 [x2 y2]) ; rescale [x2 y2] to be the same length as [x1 y1]
-        a (/ (+ (* x1 x2) (* y1 y2)) l1)
-        b (/ (- (* x2 y1) (* x1 y2)) l1)]
-      (fn [[x y]] [(+ (* a x) (* b y)) (- (* a y) (* b x))])))
+        ; rescale [x2 y2] to be the same length as [x1 y1]
+        [x2 y2] (map #(* % (Math/sqrt (/ l1 l2))) [x2 y2]) 
+        r (/ (+ (* x1 x2) (* y1 y2)) l1)]
+    (matrix-transform [x1 y1] r 1)))
+
+
 
 (defn parse-mouse-event [ev]
   {:x (- (aget ev "pageX") 8)
