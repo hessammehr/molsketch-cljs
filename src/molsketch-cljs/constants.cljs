@@ -17,4 +17,5 @@
 (defn margin [node]
   (if (:elem node) label-margin node-radius))
 
-;; (def templates {:methyl {:nodes { 0 }}})
+(def mouse-offset-horizontal 8)
+(def mouse-offset-vertical 8)

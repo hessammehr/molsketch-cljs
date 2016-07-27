@@ -21,7 +21,10 @@
     (is (= (into #{}(select [:bonds ALL FIRST] fp)) #{4 9 7}))
     (is (= (:roots fp) #{[:nodes 5] [:bonds 4]}))
     (is (= [-0.5 0.5] (xform [0.5 0.5])))
-    (is (= true (do (println (fun/graft blank-state f [:nodes 1]) true))))))
+    (is (= true (do (println (fun/graft blank-state f [:nodes 1]) true))))
+    (is (= 0 (frag/order (tmplt/templates :methyl))))
+    (is (= 2 (frag/order (tmplt/templates :cyclobutyl))))
+    ))
 
 
 (enable-console-print!)

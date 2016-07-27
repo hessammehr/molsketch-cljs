@@ -4,8 +4,8 @@
             [molsketch-cljs.constants :refer [node-click-radius hover-radius
                                               min-drag-radius
                                               editor-dimensions]]
-            [molsketch-cljs.util :refer [distance clip-line max-node
-                                         parse-mouse-event parse-keyboard-event]]
+            [molsketch-cljs.events :refer [parse-mouse-event parse-keyboard-event]]
+            [molsketch-cljs.util :refer [distance clip-line max-node]]
             [molsketch-cljs.functional
              :refer [add-free-node add-molecule
                      get-bonds nodes-within node-inside]]
@@ -17,15 +17,16 @@
 
 (def blank-state
   {:nodes
-      { 0 {:pos [65 30] :elem :P}
-        1 {:pos [90 50]}
-        2 {:pos [90 80] :elem :O}}
+   {0 {:pos [65 30] :elem :P}
+    1 {:pos [90 50]}
+    2 {:pos [90 80] :elem :O}}
    :bonds
-      { 0 {:nodes #{0 1}}
-        1 {:nodes #{1 2}}}
+   {0 {:nodes #{0 1}}
+    1 {:nodes #{1 2}}}
    :molecules
-      { 0 {:nodes #{0 1 2} :bonds #{0 1}}
-        :status {:mode :normal :mouse nil :key-seq []}}})
+   {0 {:nodes #{0 1 2} :bonds #{0 1}}}
+   :status
+   {:mode :normal :mouse nil :key-seq []}})
 
 (defonce app-state
   (atom blank-state))

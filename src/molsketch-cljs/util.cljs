@@ -56,15 +56,6 @@
         [p1 p2] (map #(get-in state [:nodes % :pos]) node-ids)]
     (distance-line-section p1 p2 point)))
 
-(defn max-node [state]
-  (apply max (keys (:nodes state))))
-
-(defn max-bond [state]
-  (apply max (keys (:bonds state))))
-
-(defn max-molecule [state]
-  (apply max (keys (:molecules state))))
-
 (defn angle [[x y]]
   (let [y (- y)
         a (Math/atan (/ y x))
@@ -81,45 +72,40 @@
 (defn translate [[x1 y1] [x2 y2]]
   [(+ x1 x2) (+ y1 y2)])
 
-; Note that the y axis points down in SVG, so rotations are count-clockwise.
+(defn translator-from-to [[x1 y1] [x2 y2]]
+  "Returns a function xform [x y] -> [X Y] that moves the point [x1 y1] to
+  [x2 y2]."
+  (let [[vx vy] [(- x2 x1) (- y2 y1)]]
+    (fn [[x y]] [(+ x )])))
+
 (defn rotate-degrees
-  [[x y] degrees]
+  [[x y] degrees] ; Note: y axis points down, so rotations are count-clockwise.
   (let [radians (degree-to-radian degrees)
         a (Math/cos radians)
         b (Math/sin radians)]
-     (matrix-transform [x y] a b)))
+    (matrix-transform [x y] a b)))
 
-; Matrix multiply with      a             b
-;                          -b             a
-; representing a general rotation and scaling operation
 (defn matrix-transform
+  "Matrix multiply with      a             b
+                            -b             a
+  representing a general rotation and scaling operation."
   [[x y] a b]
   [(+ (* x a) (* y b))
    (- (* y a) (* x b))])
 
-; Returns a unitary transformation that orients
-; [x1 y1] along [x2 y2] by rotation.
-(defn orient-from-to [[x1 y1] [x2 y2]]
-  (let [l1 (+ (* x1 x1) (* y1 y1))
-        l2 (+ (* x2 x2) (* y2 y2))
-        ; rescale [x2 y2] to be the same length as [x1 y1]
-        [x2 y2] (map #(* % (Math/sqrt (/ l1 l2))) [x2 y2]) 
-        r (/ (+ (* x1 x2) (* y1 y2)) l1)]
-    (matrix-transform [x1 y1] r 1)))
+(defn xform-from-to [[x1 y1] [x2 y2]]
+  "Returns a unitary transformation that takes [x1 y1] to [x2 y2] by rotation
+  and scaling. "
+  (let [factor (/ 1 (+ (* x1 x1) (* y1 y1)))
+        a (/ (+ (* x1 x2) (* y1 y2)) factor)
+        b (/ (- (* x2 y1) (* x1 y2)) factor)]
+    (fn [[x y]] (matrix-transform [x y] a b))))
 
+(defn orient-along [[x1 y1] [x2 y2]]
+  "Returns a function that performs on a given point [x y] the rotation
+  necessary to orient [x1 y1] along [x2 y2] by rotation."
+  (let [[x2 y2] (normalize [x2 y2] (len [x1 y2]))] ; rescale second vector
+    (xform-from-to [x1 y1] [x2 y2])))
 
-
-(defn parse-mouse-event [ev]
-  {:x (- (aget ev "pageX") 8)
-   :y (- (aget ev "pageY") 8)
-   :button (aget ev "button")})
-
-(defn parse-keyboard-event [ev]
-  {:key (char (aget ev "keyCode"))})
-
-
-; Returns a function xform [x y] -> [X Y] that
-; moves the point [x1 y1] to [x2 y2]
-(defn translator-from-to [[x1 y1] [x2 y2]]
-  (let [[vx vy] [(- x2 x1) (- y2 y1)]]
-  (fn [[x y]] [(+ x )])))
+;; (defn add-class [node class]
+;;   (update node :class str " " class))

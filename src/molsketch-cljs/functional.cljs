@@ -1,39 +1,26 @@
+;; This namespaces enables querying and functional transformation of the state
+;; functions in this namespaces always take state as their first argument and
+;; return a new state in case of a transformation.
+
 (ns molsketch-cljs.functional
   (:require-macros [com.rpl.specter.macros
                     :refer [select transform]])
-  (:require [molsketch-cljs.util
-             :refer [max-node max-bond max-molecule displacement
-                     normalize distance rotate-degrees invert
-                     angle xform-from-to
-                     translator-from-to]]
-            [molsketch-cljs.fragment :as frag]
-            [molsketch-cljs.constants :refer [bond-length
-                                              fuse-tolerance]]
-            [clojure.set :refer [difference]]
-            [molsketch-cljs.templates :refer [templates]]
-            [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
+  (:require
+   [molsketch-cljs.constants :refer [bond-length fuse-tolerance]]
+   [molsketch-cljs.fragment :refer [connected remap]]
+   [molsketch-cljs.templates :refer [templates]]
+   [molsketch-cljs.util
+    :refer [max-node max-bond max-molecule displacement
+            normalize distance rotate-degrees invert
+            angle xform-from-to
+            translator-from-to]]
+   [clojure.set :refer [difference]]
+   [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
 
 (declare nodes-within delete-bond)
 
-(defn add-class [node class]
-  (update node :class str " " class))
-
-(defn nearest-node [state point]
-  (->> state
-       :nodes
-       (apply min-key #(distance point (:pos (second %))))
-       first))
-
-(defn node-inside [state point radius]
-  (first (nodes-within state point 0 radius)))
-
-(defn nodes-within [state point radius tol]
-  (let [ks (keys (:nodes state))
-        ns (vals (:nodes state))
-        ds (map #(distance point (:pos %)) ns)
-        dds (map #(.abs js.Math (- % radius)) ds)
-        within (keep-indexed #(when (< %2 tol) (nth ks %1)) dds)]
-    (into #{} within)))
+(defn max-molecule [state]
+  (apply max (keys (:molecules state))))
 
 (defn new-node [state node-props]
   (let [id (inc (max-node state))]
@@ -60,26 +47,6 @@
         (add-molecule m)
         (add-node n (:id m)))))
 
-
-(defn get-bonds [state node-id]
-  (->> (:bonds state)
-       (keep (fn [[b-id {nodes :nodes}]]
-               (when (nodes node-id) b-id)))
-       (into #{})))
-
-(defn connected [state node-id]
-  (->> (get-bonds state node-id)
-       (map #(get-in state [:bonds % :nodes]))
-       (map #(disj % node-id))
-       (map first)
-       (into #{})))
-
-(defn node-displacement [state n1-id n2-id]
-  (let [nodes (:nodes state)
-        n1 (nodes n1-id)
-        n2 (nodes n2-id)]
-    (displacement (:pos n1) (:pos n2))))
-
 (defn find-molecule [state node-id]
   (->> (:molecules state)
        (keep (fn [[m-id {nodes :nodes}]]
@@ -87,9 +54,12 @@
        first))
 
 (defn new-bond [state bond-props]
+  "Returns a new hashmap representing a bond produced by associng an
+  auto-incremented :id to the bond-propes provided."
   (assoc bond-props :id (inc (max-bond state))))
 
 (defn add-bond [state b mol-id]
+  "Appends the hashmap b describing a bond to state and and molecule mol-id."
   (-> state
       (assoc-in [:bonds (:id b)] b)
       (update-in [:molecules mol-id :bonds] conj (:id b))))
@@ -101,6 +71,8 @@
     (difference nearby bonded)))
 
 (defn join-molecules [state m1-id m2-id]
+  "Merges molecules m1-id and m2-id, removing m2-id in the process. Does nothing
+  if m1-id and m2-id are the same."
   (if (= m1-id m2-id) state
       (let [m2 (get-in state [:molecules m1-id])]
         (-> state
@@ -118,14 +90,15 @@
         (join-molecules m1 m2)
         (add-bond b m1))))
 
-(defn sprout-direction [state node-id]
+(defn sprout-direction [state node-id & {order :order :or {order 1}}]
   (let [vecs (map (partial node-displacement state node-id)
-               (connected state node-id))
+                  (connected state node-id))
         sum (apply map + vecs)
         new-dir (invert sum)]
     (case (count vecs)
       0 (rotate-degrees [1 0] -30)
-      1 (rotate-degrees new-dir 60)
+      1 (if (> order 1) new-dir
+            (rotate-degrees new-dir -30))
       new-dir)))
 
 (defn sprout-position [state node-id]
@@ -156,47 +129,54 @@
 (defn delete-bond [state bond-id]
   (update state :bonds dissoc bond-id))
 
-; (defn graft [state template at]
-;   (let [min-node-id (inc (max-node state))
-;         min-bond-id (inc (max-bond state))
-;         template-node-ids (keys (:nodes template))
-;         template-bond-ids (keys (:bonds template))
-;         roots (:roots template)
-;         root-pos (get-in template [typ root :pos])
-;         graft-pos (get-in state [:nodes at :pos])
-;         graft-dir (sprout-direction state at)
-;         node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
-;         node-mapping (assoc node-mapping root at)
-;         bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
-;         translation (mapv + (invert root-pos) graft-pos)
-;         template (-> template
-;                      (dissoc :roots)
-;                      (dissoc-in (:root template))
-;                      (frag/rotate (angle graft-dir) root-pos)
-;                      (frag/translate translation)
-;                      (frag/remap node-mapping bond-mapping))]
-;     (println graft-dir (angle graft-dir))
-;     (merge-with merge state template)))
+(defn graft-at-node [state fragment node]
+  (let [min-node-id (inc (max-node state))
+        min-bond-id (inc (max-bond state))
+        node-mapping (partial + min-node-id)
+        bond-mapping (partial + min-bond-id)
+        root-id (get-in fragment [:root :nodes])
+        root-pos (get-in fragment [:nodes root-id])]
+    (-> template
+        (remap node-mapping bond-mapping))
+    ))
 
-(defmulti graft (fn [state template at] (first at)))
+(defn graft [state template at]
+  (let [min-node-id (inc (max-node state))
+        min-bond-id (inc (max-bond state))
+        roots (:roots template)
+        root-pos (get-in template [typ root :pos])
+        graft-pos (get-in state [:nodes at :pos])
+        graft-dir (sprout-direction state at)
+        node-mapping (into {} (for [id template-node-ids] [id (+ min-node-id id)]))
+        node-mapping (assoc node-mapping root at)
+        bond-mapping (into {} (for [id template-bond-ids] [id (+ min-bond-id id)]))
+        translation (mapv + (invert root-pos) graft-pos)
+        template (-> template
+                     (dissoc :roots)
+                     (dissoc-in (:root template))
+                     (frag/rotate (angle graft-dir) root-pos)
+                     (frag/translate translation)
+                     (frag/remap node-mapping bond-mapping))]
+    (println graft-dir (angle graft-dir))
+    (merge-with merge state template)))
 
-; Graft onto bond
-(defmethod graft :bonds [state template at])
-; Graft at node
-(defmethod graft :nodes [state template [_ node-id]]
-  (let [node-shift #(+ % (inc (max-node state)))
-        bond-shift #(+ % (inc (max-bond state)))
-        sprout-dir (sprout-direction state node-id)
-        graft-dir (:graft-dir template)
-        graft-pos (sprout-position state node-id)
-        root-pos (get-in template [:nodes node-id :pos])
-        translation1 (translator-from-to root-pos [0 0])
-        translation2 (translator-from-to [0 0] graft-pos)
-        rotation (xform-from-to root-pos graft-dir)]
-    (->> template
-      (transform [:nodes ALL FIRST] node-shift)
-      (transform [:bonds MAP-VALS :nodes ALL] node-shift)
-      (transform [:bonds ALL FIRST] bond-shift)
-      (transform [:nodes MAP-VALS :pos] translation1)
-      (transform [:nodes MAP-VALS :pos] rotation)
-      (transform [:nodes MAP-VALS :pos] translation2))))
+;; (defmulti graft (fn [state template at] (first at)))
+
+;; (defmethod graft :bonds [state template at])
+;; (defmethod graft :nodes [state template [_ node-id]]
+;;   (let [node-shift #(+ % (inc (max-node state)))
+;;         bond-shift #(+ % (inc (max-bond state)))
+;;         sprout-dir (sprout-direction state node-id)
+;;         graft-dir (:graft-dir template)
+;;         graft-pos (sprout-position state node-id)
+;;         root-pos (get-in template [:nodes node-id :pos])
+;;         translation1 (translator-from-to root-pos [0 0])
+;;         translation2 (translator-from-to [0 0] graft-pos)
+;;         rotation (xform-from-to root-pos graft-dir)]
+;;     (->> template
+;;       (transform [:nodes ALL FIRST] node-shift)
+;;       (transform [:bonds MAP-VALS :nodes ALL] node-shift)
+;;       (transform [:bonds ALL FIRST] bond-shift)
+;;       (transform [:nodes MAP-VALS :pos] translation1)
+;;       (transform [:nodes MAP-VALS :pos] rotation)
+;;       (transform [:nodes MAP-VALS :pos] translation2))))
