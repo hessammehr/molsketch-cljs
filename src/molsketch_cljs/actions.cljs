@@ -14,5 +14,7 @@
        (swap! state-atom delete-node n-id)))
    \6
    (fn [state-atom]
-     (when-let [at (active @state-atom)]
-       (swap! state-atom graft-at-node (templates :cyclohexyl) at)))})
+     (when-let [[type id] (active @state-atom)]
+        (case type
+              :nodes (swap! state-atom graft-at-node (templates :cyclohexyl) id)
+              :bonds (println "Not implemented!"))))})

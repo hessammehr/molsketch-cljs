@@ -79,7 +79,7 @@
   "Returns a function xform [x y] -> [X Y] that moves the point [x1 y1] to
   [x2 y2]."
   (let [[vx vy] [(- x2 x1) (- y2 y1)]]
-    (fn [[x y]] [(+ x)]))) 
+    (fn [[x y]] [(+ x vx) (+ y vy)]))) 
 
 (defn rotate-degrees
   [[x y] degrees] ; Note: y axis points down, so rotations are count-clockwise.
@@ -99,7 +99,7 @@
 (defn xform-from-to [[x1 y1] [x2 y2]]
   "Returns a unitary transformation that takes [x1 y1] to [x2 y2] by rotation
   and scaling. "
-  (let [factor (/ 1 (+ (* x1 x1) (* y1 y1)))
+  (let [factor (+ (* x1 x1) (* y1 y1))
         a (/ (+ (* x1 x2) (* y1 y2)) factor)
         b (/ (- (* x2 y1) (* x1 y2)) factor)]
     (fn [[x y]] (matrix-transform [x y] a b))))

@@ -8,13 +8,13 @@
   (:require
    [molsketch-cljs.constants :refer [bond-length fuse-tolerance]]
    [molsketch-cljs.templates :refer [templates]]
-   [molsketch-cljs.fragment.query :refer [max-node max-bond nodes-within node-displacement
-                                          connected node-inside nearest-node get-bonds]]
+   [molsketch-cljs.fragment.query 
+    :refer [max-node max-bond nodes-within node-displacement connected
+            node-inside nearest-node get-bonds]]
    (molsketch-cljs.fragment.xformations :refer [transform remap merge-fragments])
    [molsketch-cljs.util
-    :refer [normalize distance rotate-degrees invert
-            angle xform-from-to
-            translator-from-to]]
+    :refer [normalize distance rotate-degrees invert angle xform-from-to
+            translator-from-to orient-along]]
    [clojure.set :refer [difference]]
    [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
 
@@ -57,13 +57,13 @@
 (defn new-bond [state bond-props]
   "Returns a new hashmap representing a bond produced by associng an
   auto-incremented :id to the bond-propes provided."
-  (assoc bond-props :id (inc (max-bond state))))
+  [(inc (max-bond state)) bond-props])
 
-(defn add-bond [state b mol-id]
+(defn add-bond [state [b-id b-props]]
   "Appends the hashmap b describing a bond to state and and molecule mol-id."
   (-> state
-      (assoc-in [:bonds (:id b)] b)
-      (update-in [:molecules mol-id :bonds] conj (:id b))))
+      (assoc-in [:bonds b-id] b-props)))
+      ;(update-in [:molecules mol-id :bonds] conj (:id b))))
 
 (defn fusion-candidates [state node-id]
   (let [pos (get-in state [:nodes node-id :pos])
@@ -84,28 +84,27 @@
             (dissoc m2-id)))))
 
 (defn connect [state n1-id n2-id]
-  (let [b (new-bond state {:nodes #{n1-id n2-id}})
-        m1 (find-molecule state n1-id)
-        m2 (find-molecule state n2-id)]
+  (let [b (new-bond state {:nodes #{n1-id n2-id}})]
+        ;m1 (find-molecule state n1-id)
+        ;m2 (find-molecule state n2-id)]
     (-> state
-        (join-molecules m1 m2)
-        (add-bond b m1))))
+        ;(join-molecules m1 m2)
+        (add-bond b))))
 
 (defn sprout-direction [state node-id & {order :order :or {order 1}}]
   (let [vecs (map (partial node-displacement state node-id)
                   (connected state node-id))
-        sum (apply map + vecs)
-        new-dir (invert sum)]
-    (case (count vecs)
-      0 (rotate-degrees [1 0] -30)
-      1 (if (> order 1) new-dir
-            (rotate-degrees new-dir -30))
-      new-dir)))
+        sum (invert (apply map + vecs))
+        new-dir (case (count vecs)
+                  0 (rotate-degrees [1 0] -30)
+                  1 (if (> order 1) sum (rotate-degrees sum -30))
+                  sum)]
+      (normalize new-dir bond-length)))
 
 (defn sprout-position [state node-id]
   (let [cur-pos (get-in state [:nodes node-id :pos])
         new-dir (sprout-direction state node-id)]
-    (mapv + cur-pos (normalize new-dir bond-length))))
+    (mapv + cur-pos new-dir)))
 
 (defn sprout-bond [state node-id]
   (if-let [c (first (fusion-candidates state node-id))]
@@ -116,7 +115,7 @@
           m (find-molecule state node-id)]
       (-> state
           (add-node n m)
-          (add-bond b m)))))
+          (add-bond b)))))
 
 (defn active [state]
   (get-in state [:status :hovered]
@@ -136,16 +135,21 @@
         node-mapping (partial + min-node-id)
         bond-mapping (partial + min-bond-id)
         root-id (get-in fragment [:root :nodes])
-        root-pos (get-in fragment [:nodes root-id])
+        root-pos (get-in fragment [:nodes root-id :pos])
         graft-pos (get-in state [:nodes node :pos])
         graft-dir (sprout-direction state node)
-        ; translation (translator-from-to root-pos graft-pos)
+        xform (xform-from-to root-pos graft-dir)
+        translation (translator-from-to [0 0] graft-pos)
         fragment (-> fragment
-                  (remap node-mapping bond-mapping)
-                  ; (update :nodes #(dissoc % (:root fragment)))
-                  (dissoc :root))]
+                  (dissoc :root)
+                  ;(update :nodes dissoc root-id)
+                  (transform (comp translation xform))
+                  (remap node-mapping bond-mapping))]
                   ; (transform translation))] 
-      (merge-fragments state fragment)))
+      (-> state
+        (merge-fragments fragment)
+        (connect node (node-mapping root-id)))))
+      
         
 
     
