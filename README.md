@@ -6,30 +6,20 @@ A 2D molecular structure drawing environment coded in Clojurescript.
 
 To get an interactive development environment run:
 
-    lein figwheel
+```bash
+lein figwheel
+```
 
-and open your browser at [localhost:3449](http://localhost:3449/).
-This will auto compile and send all changes to the browser without the
-need to reload. After the compilation process is complete, you will
-get a Browser Connected REPL. An easy way to try it is:
+and go `http://localhost:3449`. You can get a nicer repl using `rlwrap`:
 
-    (js/alert "Am I connected?")
+```bash
+rlwrap lein figwheel
+```
 
-and you should see an alert in the browser window.
-
-To clean all compiled files:
-
-    lein clean
-
-To create a production build run:
-
-    lein cljsbuild once min
-
-And open your browser in `resources/public/index.html`. You will not
-get live reloading, nor a REPL.
+Pull requests are welcome!
 
 ## License
 
-Copyright © 2015 S. Hessam M. Mehr
+Copyright © 2015-2016 S. Hessam M. Mehr
 
 MIT License
