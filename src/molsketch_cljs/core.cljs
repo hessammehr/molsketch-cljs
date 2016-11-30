@@ -5,10 +5,11 @@
                                               min-drag-radius
                                               editor-dimensions]]
             [molsketch-cljs.events :refer [parse-mouse-event parse-keyboard-event]]
-            [molsketch-cljs.util :refer [distance clip-line max-node]]
+            [molsketch-cljs.util :refer [distance clip-line]]
             [molsketch-cljs.functional
-             :refer [add-free-node add-molecule
-                     get-bonds nodes-within node-inside]]
+             :refer [add-free-node add-molecule]] 
+            [molsketch-cljs.fragment.query
+             :refer [nodes-within node-inside get-bonds]]
             [molsketch-cljs.actions :refer [keymap]]))
 
 (enable-console-print!)
@@ -85,7 +86,7 @@
              :on-mouse-down mouse-down}
        (for [[id m] molecules]
          ^{:key (str "m" id)}[cmp/molecule state m])]
-      [:p (str (:status state))]]))
+      [:p (str state)]]))
 
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))

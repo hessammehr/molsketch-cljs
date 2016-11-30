@@ -4,14 +4,14 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.9.0-alpha10"]
-                 [org.clojure/clojurescript "1.9.89"]
-                 [org.clojure/core.async "0.2.385"]
-                 [reagent "0.6.0-rc"]
-                 [com.rpl/specter "0.11.2"]]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
+                 [org.clojure/clojurescript "1.9.293"]
+                 [org.clojure/core.async "0.2.395"]
+                 [reagent "0.6.0"]
+                 [com.rpl/specter "0.13.1"]]
 
   :plugins [[lein-cljsbuild "1.1.3"]
-            [lein-figwheel "0.5.4-7"]]
+            [lein-figwheel "0.5.9-SNAPSHOT"]]
 
   :source-paths ["src"]
 
@@ -25,8 +25,10 @@
 
                 :compiler {:main molsketch-cljs.core
                            :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/molsketch-cljs.js"
+                           :output-to "resources/public/js/compiled/out/molsketch-cljs.js"
                            :output-dir "resources/public/js/compiled/out"
+                           :source-map true
+                           :optimizations :none
                            :source-map-timestamp true}}
                ;; This next build is an compressed minified build for
                ;; production. You can build this with:

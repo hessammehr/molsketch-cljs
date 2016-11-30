@@ -18,22 +18,25 @@
         dy2 (/ (* clip2 (- y1 y2)) l)]
       [[(+ x1 dx1) (+ y1 dy1)] [(+ x2 dx2) (+ y2 dy2)]]))
 
-(defn len [[x y]]
+(defn len-squared [[x y]]
   (+ (* x x)
      (* y y)))
+
+(defn len [[x y]]
+  (Math/sqrt (len-squared [x y]))) 
 
 (defn displacement [[x1 y1] [x2 y2]]
   [(- x2 x1) (- y2 y1)])
 
 (defn distance-squared [p1 p2]
-  (len (displacement p1 p2)))
+  (len-squared (displacement p1 p2)))
 
 (defn distance [p1 p2]
   (Math/sqrt (distance-squared p1 p2)))
 
-(defn normalize [[x y] len]
-  (let [m (len [x y])]
-    [(/ (* x len) m) (/ (* y len) m)]))
+(defn normalize [[x y] l]
+  (let [L (len [x y])]
+    [(/ (* x l) L) (/ (* y l) L)]))
 
 (defn invert [v]
   (mapv - v))
@@ -76,7 +79,7 @@
   "Returns a function xform [x y] -> [X Y] that moves the point [x1 y1] to
   [x2 y2]."
   (let [[vx vy] [(- x2 x1) (- y2 y1)]]
-    (fn [[x y]] [(+ x )])))
+    (fn [[x y]] [(+ x)]))) 
 
 (defn rotate-degrees
   [[x y] degrees] ; Note: y axis points down, so rotations are count-clockwise.

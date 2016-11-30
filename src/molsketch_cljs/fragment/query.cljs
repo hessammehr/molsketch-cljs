@@ -2,14 +2,16 @@
 ;; molsketch-cljs.functional. Functions more suited to fragment (as opposed to
 ;; state) querying/manipulation live in molsketch.fragment.
 
-(ns molsketch-cljs.fragment
-  (:require-macros [com.rpl.specter.macros :refer
-                    [transform setval select]])
+(ns molsketch-cljs.fragment.query
+  (:require-macros [com.rpl.specter :refer
+                    [select]])
   (:require
    [molsketch-cljs.util :as u]
    [com.rpl.specter
     :refer [ALL FIRST LAST VAL MAP-VALS]
-    :include-macros true]))
+    :include-macros true]
+   [molsketch-cljs.util
+    :refer [distance displacement]]))
 
 (defn max-node [fragment]
   (apply max (keys (:nodes fragment))))
@@ -24,10 +26,6 @@
        (apply min-key #(distance point (:pos (second %))))
        first))
 
-(defn node-inside [fragment point radius]
-  "Return a node in state that is within radius of point."
-  (first (nodes-within fragment point 0 radius)))
-
 (defn nodes-within [fragment point radius tol]
   "Returns the set of nodes in state whose distance to point is between
   radius-tol and radius+tol."
@@ -37,6 +35,10 @@
         dds (map #(.abs js.Math (- % radius)) ds)
         within (keep-indexed #(when (< %2 tol) (nth ks %1)) dds)]
     (into #{} within)))
+
+(defn node-inside [fragment point radius]
+  "Return a node in state that is within radius of point."
+  (first (nodes-within fragment point 0 radius)))
 
 (defn node-displacement [fragment n1-id n2-id]
   (let [nodes (:nodes fragment)
