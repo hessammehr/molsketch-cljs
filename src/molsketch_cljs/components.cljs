@@ -23,9 +23,11 @@
    [selection-marker state]])
 
 (defn hover-marker [state]
-  (when-let [hovered (get-in state [:status :hovered])]
-    (let [[x y] (get-in state (conj hovered :pos))]
-      [:circle {:cx x :cy y :r hover-marker-radius :class "hover-marker"}])))
+  (when-let [[type id] (get-in state [:status :hovered])]
+    (case type
+      :nodes (let [[x y] (get-in state [type id :pos])]
+                  [:circle {:cx x :cy y :r hover-marker-radius :class "hover-marker"}])
+      :bonds [bond state (get-in state [type id]) :hovered true])))
 
 (defn selection-marker [state]
   (when-let [selected (get-in state [:status :selected])]
@@ -38,11 +40,14 @@
            [:text {:x x :y y :class (str "label " class)}
             (name elem)])))
 
-(defn bond [state b]
-  (let [{n :nodes class :class} b
+(defn bond [state b & {:keys [hovered selected]}]
+  (println hovered selected)
+  (let [{n :nodes} b
         [{p1 :pos} {p2 :pos} :as nodes] (map (:nodes state) n)
         [clip1 clip2] (map margin nodes)
         [[x1 y1] [x2 y2]] (clip-line p1 p2 clip1 clip2)]
     [:line {:x1 x1 :y1 y1
             :x2 x2 :y2 y2
-            :class (str "bond " class)}]))
+            :class (str "bond"
+                        (when hovered " hovered")
+                        (when selected " selected"))}]))
