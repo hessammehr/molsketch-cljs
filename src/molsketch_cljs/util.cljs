@@ -2,11 +2,33 @@
 
 (declare distance distance-squared matrix-transform)
 
+(defn len-squared [[x y]]
+  (+ (* x x)
+     (* y y)))
+
+(defn len [[x y]]
+  (Math/sqrt (len-squared [x y]))) 
+
 (defn degree-to-radian [deg]
   (* Math/PI (/ deg 180)))
 
 (defn radian-to-degree [rad]
   (* 180 (/ rad Math/PI)))
+
+(defn scale [[x y] s]
+  [(* s x) (* s y)])
+
+(defn normalize [[x y] l]
+  (let [L (len [x y])]
+    (scale [x y] (/ l L))))
+
+(defn inner-product [[x1 y1] [x2 y2]]
+  (+  (* x1 x2)
+      (* y1 y2)))
+
+(defn projection [[x1 y1] [x2 y2]]
+  (let [[x2 y2] (normalize [x2 y2] 1.0)]
+    (scale [x2 y2] (inner-product [x1 y1] [x2 y2]))))
 
 ;; Clip line section by radius clip1 on one side
 ;; and clip2 on the other.
@@ -18,13 +40,6 @@
         dy2 (/ (* clip2 (- y1 y2)) l)]
       [[(+ x1 dx1) (+ y1 dy1)] [(+ x2 dx2) (+ y2 dy2)]]))
 
-(defn len-squared [[x y]]
-  (+ (* x x)
-     (* y y)))
-
-(defn len [[x y]]
-  (Math/sqrt (len-squared [x y]))) 
-
 (defn displacement [[x1 y1] [x2 y2]]
   [(- x2 x1) (- y2 y1)])
 
@@ -34,10 +49,6 @@
 (defn distance [p1 p2]
   (Math/sqrt (distance-squared p1 p2)))
 
-(defn normalize [[x y] l]
-  (let [L (len [x y])]
-    [(/ (* x l) L) (/ (* y l) L)]))
-
 (defn invert [v]
   (mapv - v))
 
@@ -45,14 +56,14 @@
   (distance (:pos node) point))
 
 (defn distance-line-section [[x1 y1] [x2 y2] point]
-  (let [a (/ (- y2 y1) (- x2 x1))
-        g (/ a (Math/sqrt (+ 1 (* a a))))
-        [[x1 y1] [x2 y2] [x y]]
-        (map #(matrix-transform % (- g) 1) [[x1 y1] [x2 y2] point])]
-    (cond
-      (or (< x (min x1 x2)) (> x (max x1 x2)))
-      (min (distance [x y] [x1 y1]) (distance [x y] [x2 y2]))
-      :else (.abs js/Math (- y y2)))))
+  (let [l (displacement [x1 y1] [x2 y2])
+        l1 (displacement [x1 y1] point)
+        l2 (displacement point [x2 y2])
+        p1 (inner-product l l1)
+        p2 (inner-product l l2)]
+    (cond (and (>= p1 0) (>= p2 0)) (len (map - l1 (projection l1 l)))
+          (and (>= p1 0) (< p2 0)) (distance [x2 y2] point)
+          (and (< p1 0) (>= p2 0)) (distance [x1 y1] point))))
 
 (defn distance-bond [state bond-id point]
   (let [node-ids (get-in state [:bonds bond-id :nodes])

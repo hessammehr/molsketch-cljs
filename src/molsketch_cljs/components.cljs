@@ -41,7 +41,6 @@
             (name elem)])))
 
 (defn bond [state b & {:keys [hovered selected]}]
-  (println hovered selected)
   (let [{n :nodes} b
         [{p1 :pos} {p2 :pos} :as nodes] (map (:nodes state) n)
         [clip1 clip2] (map margin nodes)

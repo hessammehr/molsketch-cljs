@@ -11,7 +11,7 @@
     :refer [ALL FIRST LAST VAL MAP-VALS]
     :include-macros true]
    [molsketch-cljs.util
-    :refer [distance displacement]]))
+    :refer [distance distance-bond displacement]]))
 
 (defn max-node [fragment]
   (apply max (keys (:nodes fragment))))
@@ -26,6 +26,13 @@
        (apply min-key #(distance point (:pos (second %))))
        first))
 
+(defn nearest-bond [fragment point]
+  "Returns the node in fragment that is closes to point."
+    (->> fragment
+       :bonds
+       keys
+       (apply min-key #(distance-bond fragment % point))))
+
 (defn nodes-within [fragment point radius tol]
   "Returns the set of nodes in state whose distance to point is between
   radius-tol and radius+tol."
@@ -37,8 +44,10 @@
     (into #{} within)))
 
 (defn node-inside [fragment point radius]
-  "Return a node in state that is within radius of point."
-  (first (nodes-within fragment point 0 radius)))
+  "Returns the closest node in state that is within radius of point."
+  (let [n (nearest-node fragment point)
+        p (get-in fragment [:nodes n :pos])]
+    (when (< (distance p point) radius) n)))
 
 (defn node-displacement [fragment n1-id n2-id]
   (let [nodes (:nodes fragment)
