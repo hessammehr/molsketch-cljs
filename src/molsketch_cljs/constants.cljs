@@ -7,8 +7,7 @@
 (def hover-radius 5)
 (def min-drag-radius 5) ; movement before it's counted as a drag
 (def fuse-tolerance 5)
-(def hover-marker-radius 8)
-(def selection-marker-radius 5)
+(def node-marker-radius 5)
 
 (def editor-dimensions [600 200])
 

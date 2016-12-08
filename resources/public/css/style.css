@@ -19,12 +19,12 @@ body {background-color: white;}
 
 circle {stroke-width: 0;}
 
-.hover-marker {
+circle.hovered {
     fill: blue;
     opacity: 0.3;
 }
 
-.selection-marker {
+circle.selected {
     fill: red;
     opacity: 0.5;
 }

@@ -1,9 +1,8 @@
 (ns molsketch-cljs.components
   (:require [molsketch-cljs.util :refer [clip-line]]
             [molsketch-cljs.constants :refer [node-radius margin
-                                              hover-marker-radius
-                                              selection-marker-radius]]))
-
+                                              node-marker-radius]]))
+                                              
 (declare node bond hover-marker selection-marker)
 
 ;; (defn molecule [state {nodes :nodes bonds :bonds}]
@@ -21,26 +20,22 @@
      ^{:key (str "b" id)}[bond state b])
    [hover-marker state]
    [selection-marker state]])
-
+   
 (defn hover-marker [state]
   (when-let [[type id] (get-in state [:status :hovered])]
-    (case type
-      :nodes (let [[x y] (get-in state [type id :pos])]
-                  [:circle {:cx x :cy y :r hover-marker-radius :class "hover-marker"}])
-      :bonds [bond state (get-in state [type id]) :hovered true])))
-
+      [(case type :nodes node :bonds bond) state (get-in state [type id]) :hovered true]))
+      
 (defn selection-marker [state]
   (when-let [[type id] (get-in state [:status :selected])]
-    (case type
-      :nodes (let [[x y] (get-in state [type id :pos])]
-                  [:circle {:cx x :cy y :r selection-marker-radius :class "selection-marker"}])
-      :bonds [bond state (get-in state [type id]) :selected true])))
+    [(case type :nodes node :bonds bond) state (get-in state [type id]) :selected true]))
 
-(defn node [state n]
-  (let [{[x y] :pos elem :elem class :class} n]
-    (if-not elem [:circle {:cx x :cy y :r node-radius :class class}]
-           [:text {:x x :y y :class (str "label " class)}
-            (name elem)])))
+(defn node [state n & {:keys [hovered selected]}]
+  (let [{[x y] :pos elem :elem} n
+        cls (cond hovered "hovered" selected "selected")]
+    (if cls [:circle {:cx x :cy y :r node-marker-radius :class cls}]
+        (if-not elem [:circle {:cx x :cy y :r node-radius}]
+               [:text {:x x :y y :class (str "label" cls)}
+                (name elem)]))))
 
 (defn bond [state b & {:keys [hovered selected]}]
   (let [{n :nodes} b
