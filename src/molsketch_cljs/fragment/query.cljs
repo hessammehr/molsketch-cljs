@@ -20,21 +20,21 @@
   (apply max (keys (:bonds fragment))))
 
 (defn nearest-node [fragment point]
-  "Returns the node in fragment that is closes to point."
+  "Returns the node-id in fragment that is closes to point."
   (->> fragment
        :nodes
        (apply min-key #(distance point (:pos (second %))))
        first))
 
 (defn nearest-bond [fragment point]
-  "Returns the node in fragment that is closes to point."
+  "Returns the bond-id in fragment that is closes to point."
     (->> fragment
        :bonds
        keys
        (apply min-key #(distance-bond fragment % point))))
 
 (defn nodes-within [fragment point radius tol]
-  "Returns the set of nodes in state whose distance to point is between
+  "Returns the set of nodes in fragment whose distance to point is between
   radius-tol and radius+tol."
   (let [ks (keys (:nodes fragment))
         ns (vals (:nodes fragment))
@@ -44,10 +44,15 @@
     (into #{} within)))
 
 (defn node-inside [fragment point radius]
-  "Returns the closest node in state that is within radius of point."
+  "Returns the closest node in fragment that is within radius of point."
   (let [n (nearest-node fragment point)
         p (get-in fragment [:nodes n :pos])]
     (when (< (distance p point) radius) n)))
+
+(defn bond-inside [fragment point radius]
+  "Returns the closest bond in fragment that is within radius of point."
+  (let [b (nearest-bond fragment point)]
+    (when (< (distance-bond fragment b point) radius) b)))
 
 (defn node-displacement [fragment n1-id n2-id]
   (let [nodes (:nodes fragment)

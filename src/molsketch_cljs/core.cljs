@@ -9,7 +9,7 @@
             [molsketch-cljs.functional
              :refer [add-free-node add-molecule]] 
             [molsketch-cljs.fragment.query
-             :refer [nodes-within node-inside get-bonds]]
+             :refer [nodes-within node-inside bond-inside get-bonds]]
             [molsketch-cljs.actions :refer [keymap]]))
 
 (enable-console-print!)
@@ -36,8 +36,9 @@
   (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
 
 (defn normal-mouse-move [{x :x y :y}]
-  (let [n (node-inside @app-state [x y] hover-radius)]
-    (swap! app-state assoc-in [:status :hovered] (when n [:nodes n]))))
+  (let [n (node-inside @app-state [x y] hover-radius)
+        b (bond-inside @app-state [x y] hover-radius)]
+    (swap! app-state assoc-in [:status :hovered] (if n [:nodes n] (when b [:bonds b])))))
 
 (defn normal-click [{x :x y :y}]
   (if-let [n (node-inside @app-state [x y] node-click-radius)]
