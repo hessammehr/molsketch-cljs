@@ -30,9 +30,11 @@
       :bonds [bond state (get-in state [type id]) :hovered true])))
 
 (defn selection-marker [state]
-  (when-let [selected (get-in state [:status :selected])]
-    (let [[x y] (get-in state (conj selected :pos))]
-      [:circle {:cx x :cy y :r selection-marker-radius :class "selection-marker"}])))
+  (when-let [[type id] (get-in state [:status :selected])]
+    (case type
+      :nodes (let [[x y] (get-in state [type id :pos])]
+                  [:circle {:cx x :cy y :r selection-marker-radius :class "selection-marker"}])
+      :bonds [bond state (get-in state [type id]) :selected true])))
 
 (defn node [state n]
   (let [{[x y] :pos elem :elem class :class} n]

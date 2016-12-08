@@ -2,7 +2,7 @@
 
 (def node-radius 0.5)
 (def label-margin 8)
-(def node-click-radius 5)
+(def click-radius 5)
 (def bond-length 30)
 (def hover-radius 5)
 (def min-drag-radius 5) ; movement before it's counted as a drag

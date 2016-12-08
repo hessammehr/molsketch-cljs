@@ -4,6 +4,9 @@ body {background-color: white;}
     opacity: 0.3;
     stroke-width: 6px;
 }
+.bond.selected {stroke: red; 
+}
+
 .label {
   font-family: sans-serif;
   text-anchor: middle;

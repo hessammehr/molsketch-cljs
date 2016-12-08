@@ -1,7 +1,7 @@
 (ns molsketch-cljs.core
   (:require [reagent.core :as reagent :refer [atom]]
             [molsketch-cljs.components :as cmp]
-            [molsketch-cljs.constants :refer [node-click-radius hover-radius
+            [molsketch-cljs.constants :refer [click-radius hover-radius
                                               min-drag-radius
                                               editor-dimensions]]
             [molsketch-cljs.events :refer [parse-mouse-event parse-keyboard-event]]
@@ -32,18 +32,16 @@
 (defonce app-state
   (atom blank-state))
 
-(defn node-click [node-id]
-  (swap! app-state assoc-in [:status :selected] [:nodes node-id]))
-
 (defn normal-mouse-move [{x :x y :y}]
   (let [n (node-inside @app-state [x y] hover-radius)
         b (bond-inside @app-state [x y] hover-radius)]
     (swap! app-state assoc-in [:status :hovered] (if n [:nodes n] (when b [:bonds b])))))
 
 (defn normal-click [{x :x y :y}]
-  (if-let [n (node-inside @app-state [x y] node-click-radius)]
-    (node-click n)
-    (swap! app-state assoc-in [:status :selected] nil)))
+  (let [n (node-inside @app-state [x y] click-radius)
+        b (bond-inside @app-state [x y] click-radius)]
+    (println x y n b)
+    (swap! app-state assoc-in [:status :selected] (if n [:nodes n] (when b [:bonds b])))))
 
 (defn do-drag [{x :x y :y}]
   (let [h (get-in @app-state [:status :hovered])]
