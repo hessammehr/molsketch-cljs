@@ -9,6 +9,7 @@
                  [org.clojure/core.async "0.2.395"]
                  [reagent "0.6.0"]
                  [com.rpl/specter "0.13.1"]]
+                 
 
   :plugins [[lein-cljsbuild "1.1.3"]
             [lein-figwheel "0.5.9-SNAPSHOT"]]
@@ -48,7 +49,6 @@
                             :output-to "resources/public/js/compiled/test/test.js"
                             :output-dir "resources/public/js/compiled/test/out"
                             :source-map true
-                            ; :cache-analysis true
                             :optimizations :none
                             :source-map-timestamp true}}]}
 

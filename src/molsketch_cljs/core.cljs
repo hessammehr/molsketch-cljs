@@ -94,4 +94,4 @@
 (aset js/document "onkeydown" key-press)
 
 (defn on-js-reload []
-  (.clear js/console))
+  (println "Reloaded!"))
