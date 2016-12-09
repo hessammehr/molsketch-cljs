@@ -28,3 +28,7 @@ circle.selected {
     fill: red;
     opacity: 0.5;
 }
+
+.status {
+  font-family: monospace;
+}
