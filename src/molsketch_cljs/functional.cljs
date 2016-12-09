@@ -129,6 +129,11 @@
 (defn delete-bond [state bond-id]
   (update state :bonds dissoc bond-id))
 
+(defn delete [state [type id]]
+  (case type
+    :node (delete-node state id)
+    :bond (delete-bond state id)))
+
 (defn graft-at-node [state fragment node]
   (let [min-node-id (inc (max-node state))
         min-bond-id (inc (max-bond state))

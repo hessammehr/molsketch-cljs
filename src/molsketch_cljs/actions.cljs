@@ -1,6 +1,5 @@
 (ns molsketch-cljs.actions
-  (:require [molsketch-cljs.functional :refer [sprout-bond delete-node
-                                               active graft-at-node]]
+  (:require [molsketch-cljs.functional :refer [sprout-bond delete active graft-at-node]]
             [molsketch-cljs.templates :refer [templates]]))
 
 (def keymap
@@ -10,8 +9,8 @@
        (swap! state-atom sprout-bond n-id)))
    (char 46)
    (fn [state-atom]
-     (when-let [[_ n-id] (active @state-atom)]
-       (swap! state-atom delete-node n-id)))
+     (when-let [[type id] (active @state-atom)]
+       (swap! state-atom delete [type id])))
    \6
    (fn [state-atom]
      (when-let [[type id] (active @state-atom)]
