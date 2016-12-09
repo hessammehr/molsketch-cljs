@@ -18,6 +18,16 @@
   "Transforms node positions in fragment using (xform [x y]) -> [X Y]."
   (transform [:nodes MAP-VALS :pos] xform fragment))
 
+(defn transform-cursor [fragment [type id] xform]
+  "Transforms part of a fragment specified by a cursor,
+  e.g., [:nodes 5] using (xform [x y]) -> [X Y]."
+  (case type
+    :nodes (update-in fragment [:nodes id :pos] xform)
+    :bonds (reduce 
+              (fn [frag n] (transform-cursor frag [:nodes n] xform))
+              fragment 
+              (get-in fragment [:bonds id :nodes]))))
+
 (defn merge-fragments [f1 f2]
   "Merges f2 into f1"
   (-> f1

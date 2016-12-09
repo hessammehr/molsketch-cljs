@@ -5,11 +5,13 @@
                                               min-drag-radius
                                               editor-dimensions]]
             [molsketch-cljs.events :refer [parse-mouse-event parse-keyboard-event]]
-            [molsketch-cljs.util :refer [distance clip-line]]
+            [molsketch-cljs.util :refer [distance clip-line translator-from-to]]
             [molsketch-cljs.functional
-             :refer [add-free-node add-molecule]] 
+              :refer [add-free-node add-molecule]] 
+            [molsketch-cljs.fragment.xformations
+              :refer [transform-cursor]]
             [molsketch-cljs.fragment.query
-             :refer [nodes-within node-inside bond-inside get-bonds]]
+              :refer [nodes-within node-inside bond-inside get-bonds]]
             [molsketch-cljs.actions :refer [keymap]]))
 
 (enable-console-print!)
@@ -40,12 +42,14 @@
 (defn normal-click [{x :x y :y}]
   (let [n (node-inside @app-state [x y] click-radius)
         b (bond-inside @app-state [x y] click-radius)]
-    (println x y n b)
     (swap! app-state assoc-in [:status :selected] (if n [:nodes n] (when b [:bonds b])))))
 
-(defn do-drag [{x :x y :y}]
-  (let [h (get-in @app-state [:status :hovered])]
-    (swap! app-state update-in h assoc :pos [x y])))
+(defn do-drag [{x2 :x y2 :y}]
+  (let [cursor (get-in @app-state [:status :hovered])
+        {x1 :x y1 :y} (get-in @app-state [:status :mouse])
+        xform (translator-from-to [x1 y1] [x2 y2])]
+    (swap! app-state update-in [:status :mouse] merge {:x x2 :y y2 :dragging true})
+    (swap! app-state transform-cursor cursor xform)))
 
 (defn end-drag [{x :x y :y}]
   (println "Drag ended: " x y))
@@ -57,9 +61,9 @@
 (defn mouse-up [ev]
   (let [{x2 :x y2 :y} (parse-mouse-event ev)
         {x1 :x y1 :y} (get-in @app-state [:status :mouse])]
-    (if (< (distance [x1 y1] [x2 y2]) min-drag-radius)
-        (normal-click {:x x1 :y y1})
-        (end-drag {:x x2 :y y2}))
+    (if (get-in @app-state [:status :mouse :dragging])
+      (end-drag {:x x2 :y y2})
+      (normal-click {:x x1 :y y1}))
     (swap! app-state assoc-in [:status :mouse] nil)))
 
 (defn mouse-move [ev]
@@ -85,7 +89,7 @@
              :on-mouse-down mouse-down}
        (for [[id m] molecules]
          ^{:key (str "m" id)}[cmp/molecule state m])]
-      [:p (str state)]]))
+      [:p.status (str state)]]))
 
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))
