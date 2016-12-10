@@ -1,8 +1,16 @@
 (ns molsketch-cljs.fragment.xformations
    (:require-macros [com.rpl.specter :refer
                      [transform setval select]])
-   (:require [com.rpl.specter :refer [ALL FIRST LAST VAL MAP-VALS]]))
+   (:require [com.rpl.specter :refer [ALL FIRST LAST VAL MAP-VALS]]
+             [molsketch-cljs.fragment.query :refer [get-bonds]]))
 
+(defn delete-bond [fragment bond-id]
+  (update fragment :bonds dissoc bond-id))
+
+(defn delete-node [fragment node-id]
+  (let [bs (get-bonds fragment node-id)
+        fragment (update fragment :nodes dissoc node-id)]
+    (reduce delete-bond fragment bs)))
 
 (defn remap [fragment node-mapping bond-mapping]
   "Changes the node and bond ids in fragment based (node-mapping <old-node-#>) and (bond-mapping <old-bond-#>)"

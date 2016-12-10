@@ -3,22 +3,19 @@
 ;; return a new state in case of a transformation.
 
 (ns molsketch-cljs.functional
-  ; (:require-macros [com.rpl.specter
-  ;                   :refer [select transform]])
   (:require
-   [molsketch-cljs.constants :refer [bond-length fuse-tolerance]]
-   [molsketch-cljs.templates :refer [templates]]
-   [molsketch-cljs.fragment.query 
-    :refer [max-node max-bond nodes-within node-displacement connected
-            node-inside nearest-node get-bonds]]
-   (molsketch-cljs.fragment.xformations :refer [transform remap merge-fragments])
-   [molsketch-cljs.util
-    :refer [normalize distance rotate-degrees invert angle xform-from-to
-            translator-from-to orient-along]]
-   [clojure.set :refer [difference]]
-   [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
-
-(declare delete-bond)
+    [molsketch-cljs.constants :refer [bond-length fuse-tolerance]]
+    [molsketch-cljs.templates :refer [templates]]
+    [molsketch-cljs.fragment.query 
+      :refer [max-node max-bond nodes-within node-displacement connected
+              node-inside nearest-node get-bonds]]
+    [molsketch-cljs.fragment.xformations 
+      :refer [delete-bond delete-node transform remap merge-fragments]]
+    [molsketch-cljs.util
+      :refer [normalize distance rotate-degrees invert angle xform-from-to
+              translator-from-to orient-along]]
+    [clojure.set :refer [difference]]
+    [com.rpl.specter :refer [ALL FIRST LAST MAP-VALS VAL]]))
 
 (defn max-molecule [state]
   (apply max (keys (:molecules state))))
@@ -121,18 +118,11 @@
   (get-in state [:status :hovered]
           (get-in state [:status :selected])))
 
-(defn delete-node [state node-id]
-  (let [bs (get-bonds state node-id)
-        state (update state :nodes dissoc node-id)]
-    (reduce delete-bond state bs)))
-
-(defn delete-bond [state bond-id]
-  (update state :bonds dissoc bond-id))
-
 (defn delete [state [type id]]
-  (case type
-    :nodes (delete-node state id)
-    :bonds (delete-bond state id)))
+  (let [s (assoc-in state [:status :hovered] nil)]
+       (case type
+             :nodes (delete-node s id)
+             :bonds (delete-bond s id))))
 
 (defn graft-at-node [state fragment node]
   (let [min-node-id (inc (max-node state))

@@ -16,8 +16,6 @@
 
 (enable-console-print!)
 
-(declare node-click)
-
 (def blank-state
   {:nodes
    {0 {:pos [65 30] :elem :P}
@@ -33,6 +31,23 @@
 
 (defonce app-state
   (atom blank-state))
+
+(def history
+  (atom []))
+
+(add-watch app-state :history
+           (fn [k r _ n]
+            (when-not (or
+                       (when-let [o (peek @history)]
+                                 (and (= (:nodes o) (:nodes n)) (= (:bonds o) (:bonds n))))
+                       (get-in n [:status :mouse :dragging]))
+                      (swap! history conj n))))
+
+(defn undo []
+  (when-let [s (peek @history)]
+    (let [ss (pop @ history)]
+      (reset! app-state s)
+      (reset! history ss))))
 
 (defn normal-mouse-move [{x :x y :y}]
   (let [n (node-inside @app-state [x y] hover-radius)
@@ -89,7 +104,7 @@
              :on-mouse-down mouse-down}
        (for [[id m] molecules]
          ^{:key (str "m" id)}[cmp/molecule state m])]
-      [:p.status (str state)]]))
+      [:p.status (str state " history: " (count @history) " items.")]]))
 
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))
