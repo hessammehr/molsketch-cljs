@@ -1,6 +1,6 @@
 (ns molsketch-cljs.core
   (:require [reagent.core :as reagent :refer [atom]]
-            [molsketch-cljs.components :as cmp]
+            [molsketch-cljs.components :refer [structure]]
             [molsketch-cljs.constants :refer [click-radius hover-radius
                                               min-drag-radius
                                               editor-dimensions]]
@@ -25,30 +25,34 @@
    {0 {:nodes #{0 1}}
     1 {:nodes #{1 2}}}})
    
-(defonce app-state
+(def app-state
   {:canvas (atom blank-canvas)
    :status (atom {:mode :normal :mouse nil :key-seq []})
    :history (atom [])})
 
 (add-watch (:canvas app-state) :canvas
- (fn [_ _ old {:keys [status history] :as new}]
+ (fn [_ _ old new]
   (when-not 
-    (or (= @(:canvas new) @(:canvas old))
-        (get-in @status [:mouse :dragging]))
-    (swap! history conj @(:canvas new)))))
+    false ;(get-in @(:status app-state) [:mouse :dragging])
+    (swap! (:history app-state) conj old))))
 
 (defn normal-mouse-move [{x :x y :y}]
-  (let [n (node-inside @app-state [x y] hover-radius)
-        b (bond-inside @app-state [x y] hover-radius)]
-    (swap! app-state assoc-in [:status :hovered] (if n [:nodes n] (when b [:bonds b])))))
+  (let [{:keys [canvas status]} app-state
+        n (node-inside @canvas [x y] hover-radius)
+        b (bond-inside @canvas [x y] hover-radius)
+        s (or (when n [:nodes n]) (when b [:bonds b]))]
+    (swap! status assoc :hovered s)))
 
 (defn normal-click [{x :x y :y}]
-  (let [n (node-inside @app-state [x y] click-radius)
-        b (bond-inside @app-state [x y] click-radius)]
-    (swap! app-state assoc-in [:status :selected] (if n [:nodes n] (when b [:bonds b])))))
+  (let [{:keys [canvas status]} app-state
+        n (node-inside @canvas [x y] click-radius)
+        b (bond-inside @canvas [x y] click-radius)
+        s (or (when n [:nodes n]) (when b [:bonds b]))]
+    (swap! status assoc :selected s))) 
+      
 
 (defn do-drag [{x2 :x y2 :y}]
-  (let [{status :status canvas :canvas} app-state
+  (let [{:keys [canvas status]} app-state
         cursor (get @status :hovered)
         {x1 :x y1 :y} (get @status :mouse)
         xform (translator-from-to [x1 y1] [x2 y2])]
@@ -81,9 +85,10 @@
 
 (defn key-press [ev]
   (let [{k :key} (parse-keyboard-event ev)
-        status (:status app-state)
+        {status :status} app-state
         key-seq (conj (get @status :key-seq []) k)
         f (get-in keymap key-seq)]
+    (println key-seq f)
     (cond
       (nil? f) (swap! status assoc :key-seq [])
       (map? f) (swap! status assoc [:status :key-seq] key-seq)
@@ -91,13 +96,14 @@
                 (swap! status assoc :key-seq [])))))
 
 (defn editor []
-  (let [{molecules :molecules :as state} @(:canvas app-state)]
+  (let [{:keys [canvas status history]} app-state]
     [:div.editor {:on-key-down key-press}
-      [:svg {:on-mouse-up mouse-up :on-mouse-move mouse-move
-             :on-mouse-down mouse-down}
-       (for [[id m] molecules]
-         ^{:key (str "m" id)}[cmp/molecule state m])]
-      [:p.status (str state " history: " (count @(:history (:canvas app-state))) " items.")]]))
+      [:svg 
+        {:on-mouse-up mouse-up :on-mouse-move mouse-move :on-mouse-down mouse-down}
+        [structure @canvas @status]]
+      [:p.status (str "Canvas: " @canvas)]
+      [:p.status (str "Status: " @status)]
+      [:p.status (str "History: (" (count @history) " items)")]]))
 
 (reagent/render-component [editor]
                           (. js/document (getElementById "app")))

@@ -114,9 +114,9 @@
           (add-node n m)
           (add-bond b)))))
 
-(defn active [state]
-  (get-in state [:status :hovered]
-          (get-in state [:status :selected])))
+(defn active [status]
+  (or (get status :hovered)
+      (get status :selected)))
 
 (defn delete [state [type id]]
   (let [s (assoc-in state [:status :hovered] nil)]

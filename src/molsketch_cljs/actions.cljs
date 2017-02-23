@@ -5,16 +5,22 @@
 
 (def keymap
   {\0
-   (fn [{:keys [canvas]}]
-     (when-let [[_ n-id] (active @canvas)]
+   (fn [{:keys [canvas status]}]
+     (when-let [[_ n-id] (active @status)]
        (swap! canvas sprout-bond n-id)))
    (char 46)
-   (fn [{:keys [canvas]}]
-     (when-let [[type id] (active @canvas)]
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
        (swap! canvas delete [type id])))
    \6
-   (fn [{:keys [canvas]}]
-     (when-let [[type id] (active @canvas)]
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
         (case type
               :nodes (swap! canvas graft-at-node (templates :cyclohexyl) id)
-              :bonds (println "Not implemented!"))))})
+              :bonds (println "Not implemented!"))))
+   \Z
+   (fn [{:keys [canvas history]}]
+    (when-let [s (peek @history)]
+      (let [ss (pop @history)]
+        (reset! canvas s)
+        (reset! history ss))))})
