@@ -20,30 +20,13 @@
 (defn max-molecule [state]
   (apply max (keys (:molecules state))))
 
-(defn new-node [state node-props]
-  (let [id (inc (max-node state))]
-    (assoc node-props :id id)))
+(defn new-node [fragment node-props]
+  (let [id (inc (max-node fragment))]
+    [id node-props]))
 
-(defn add-node [state node mol-id]
-  (-> state
-      (assoc-in [:nodes (:id node)] node)
-      (update-in [:molecules mol-id :nodes] conj (:id node))))
-
-(defn new-molecule [state mol-props]
-  (let [id (inc (max-molecule state))
-        {nodes :nodes bonds :bonds
-         :or {nodes #{} bonds #{}}} mol-props]
-    {:id id :nodes nodes :bonds bonds}))
-
-(defn add-molecule [state mol]
-  (assoc-in state [:molecules (:id mol)] mol))
-
-(defn add-free-node [state node-props]
-  (let [n (new-node state node-props)
-        m (new-molecule state {:nodes #{(:id n)}})]
-    (-> state
-        (add-molecule m)
-        (add-node n (:id m)))))
+(defn add-node [fragment [n-id node-props]]
+  (-> fragment
+      (assoc-in [:nodes n-id] node-props)))
 
 (defn find-molecule [state node-id]
   (->> (:molecules state)
@@ -51,46 +34,43 @@
                (when (nodes node-id) m-id)))
        first))
 
-(defn new-bond [state bond-props]
+(defn new-bond [fragment bond-props]
   "Returns a new hashmap representing a bond produced by associng an
   auto-incremented :id to the bond-propes provided."
-  [(inc (max-bond state)) bond-props])
+  [(inc (max-bond fragment)) bond-props])
 
-(defn add-bond [state [b-id b-props]]
-  "Appends the hashmap b describing a bond to state and and molecule mol-id."
-  (-> state
+(defn add-bond [fragment [b-id b-props]]
+  "Appends a bond to given fragment."
+  (-> fragment
       (assoc-in [:bonds b-id] b-props)))
       ;(update-in [:molecules mol-id :bonds] conj (:id b))))
 
-(defn fusion-candidates [state node-id]
-  (let [pos (get-in state [:nodes node-id :pos])
-        nearby (nodes-within state pos bond-length fuse-tolerance)
-        bonded (connected state node-id)]
+(defn fusion-candidates [fragment node-id]
+  (let [pos (get-in fragment [:nodes node-id :pos])
+        nearby (nodes-within fragment pos bond-length fuse-tolerance)
+        bonded (connected fragment node-id)]
     (difference nearby bonded)))
 
-(defn join-molecules [state m1-id m2-id]
-  "Merges molecules m1-id and m2-id, removing m2-id in the process. Does nothing
-  if m1-id and m2-id are the same."
-  (if (= m1-id m2-id) state
-      (let [m2 (get-in state [:molecules m1-id])]
-        (-> state
-            (update-in [:molecules m1-id :bonds]
-                       into (:bonds m2))
-            (update-in [:molecules m1-id :nodes]
-                       into (:nodes m2))
-            (dissoc m2-id)))))
+; (defn join-molecules [state m1-id m2-id]
+;   "Merges molecules m1-id and m2-id, removing m2-id in the process. Does nothing
+;   if m1-id and m2-id are the same."
+;   (if (= m1-id m2-id) state
+;       (let [m2 (get-in state [:molecules m1-id])]
+;         (-> state
+;             (update-in [:molecules m1-id :bonds]
+;                        into (:bonds m2))
+;             (update-in [:molecules m1-id :nodes]
+;                        into (:nodes m2))
+;             (dissoc m2-id)))))
 
-(defn connect [state n1-id n2-id]
-  (let [b (new-bond state {:nodes #{n1-id n2-id}})]
-        ;m1 (find-molecule state n1-id)
-        ;m2 (find-molecule state n2-id)]
-    (-> state
-        ;(join-molecules m1 m2)
+(defn connect [fragment n1-id n2-id]
+  (let [b (new-bond fragment {:nodes #{n1-id n2-id}})]
+    (-> fragment
         (add-bond b))))
 
-(defn sprout-direction [state node-id & {order :order :or {order 1}}]
-  (let [vecs (map (partial node-displacement state node-id)
-                  (connected state node-id))
+(defn sprout-direction [fragment node-id & {order :order :or {order 1}}]
+  (let [vecs (map (partial node-displacement fragment node-id)
+                  (connected fragment node-id))
         sum (invert (apply map + vecs))
         new-dir (case (count vecs)
                   0 (rotate-degrees [1 0] -30)
@@ -98,20 +78,19 @@
                   sum)]
       (normalize new-dir bond-length)))
 
-(defn sprout-position [state node-id]
-  (let [cur-pos (get-in state [:nodes node-id :pos])
-        new-dir (sprout-direction state node-id)]
+(defn sprout-position [fragment node-id]
+  (let [cur-pos (get-in fragment [:nodes node-id :pos])
+        new-dir (sprout-direction fragment node-id)]
     (mapv + cur-pos new-dir)))
 
-(defn sprout-bond [state node-id]
-  (if-let [c (first (fusion-candidates state node-id))]
-    (connect state node-id c)
-    (let [new-pos (sprout-position state node-id)
-          n (new-node state {:pos new-pos})
-          b (new-bond state {:nodes #{node-id (:id n)}})
-          m (find-molecule state node-id)]
-      (-> state
-          (add-node n m)
+(defn sprout-bond [fragment node-id]
+  (if-let [c (first (fusion-candidates fragment node-id))]
+    (connect fragment node-id c)
+    (let [new-pos (sprout-position fragment node-id)
+          n (new-node fragment {:pos new-pos})
+          b (new-bond fragment {:nodes #{node-id (first n)}})]
+      (-> fragment
+          (add-node n)
           (add-bond b)))))
 
 (defn active [status]

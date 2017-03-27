@@ -6,8 +6,7 @@
                                               editor-dimensions]]
             [molsketch-cljs.events :refer [parse-mouse-event parse-keyboard-event]]
             [molsketch-cljs.util :refer [distance clip-line translator-from-to]]
-            [molsketch-cljs.functional
-              :refer [add-free-node add-molecule]] 
+            [molsketch-cljs.functional] 
             [molsketch-cljs.fragment.xformations
               :refer [transform-cursor]]
             [molsketch-cljs.fragment.query
