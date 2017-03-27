@@ -3,15 +3,17 @@
 ;; state) querying/manipulation live in molsketch.fragment.
 
 (ns molsketch-cljs.fragment.query
-  (:require-macros [com.rpl.specter :refer
-                    [select]])
+  (:require-macros
+    [com.rpl.specter :refer [select]])
   (:require
-   [molsketch-cljs.util :as u]
-   [com.rpl.specter
-    :refer [ALL FIRST LAST VAL MAP-VALS]
-    :include-macros true]
-   [molsketch-cljs.util
-    :refer [distance distance-bond displacement]]))
+    [molsketch-cljs.util :refer [rotate-degrees invert]]
+    [molsketch-cljs.constants :refer [bond-length fuse-tolerance]]
+    [clojure.set :refer [difference]]
+    [com.rpl.specter
+     :refer [ALL FIRST LAST VAL MAP-VALS]
+     :include-macros true]
+    [molsketch-cljs.util
+     :refer [normalize distance distance-bond displacement]]))
 
 (defn max-node [fragment]
   (apply max (keys (:nodes fragment))))
@@ -78,3 +80,25 @@
   (-> fragment
       (connected (get-in fragment [:root :nodes]))
       count))
+
+(defn fusion-candidates [fragment node-id]
+  (let [pos (get-in fragment [:nodes node-id :pos])
+        nearby (nodes-within fragment pos bond-length fuse-tolerance)
+        bonded (connected fragment node-id)]
+    (difference nearby bonded)))
+
+(defn sprout-direction [fragment node-id & {order :order :or {order 1}}]
+  (let [vecs (map (partial node-displacement fragment node-id)
+                  (connected fragment node-id))
+        sum (invert (apply map + vecs))
+        new-dir (case (count vecs)
+                  0 (rotate-degrees [1 0] -30)
+                  1 (if (> order 1) sum (rotate-degrees sum -30))
+                  sum)]
+      (normalize new-dir bond-length)))
+
+(defn sprout-position [fragment node-id]
+  (let [cur-pos (get-in fragment [:nodes node-id :pos])
+        new-dir (sprout-direction fragment node-id)]
+    (mapv + cur-pos new-dir)))
+

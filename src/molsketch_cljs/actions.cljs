@@ -1,5 +1,6 @@
 (ns molsketch-cljs.actions
-  (:require [molsketch-cljs.functional :refer [sprout-bond delete active graft-at-node]]
+  (:require [molsketch-cljs.functional :refer [active graft-at-node]]
+            [molsketch-cljs.fragment.xformations :refer [delete sprout-bond]]
             [molsketch-cljs.templates :refer [templates]]))
 ;           [molsketch-cljs.core :refer [app-state history]]))
 
