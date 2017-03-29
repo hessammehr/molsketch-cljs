@@ -1,6 +1,7 @@
 (ns molsketch-cljs.actions
-  (:require [molsketch-cljs.functional :refer [active graft-at-node]]
-            [molsketch-cljs.fragment.xformations :refer [delete sprout-bond]]
+  (:require [molsketch-cljs.functional :refer [active]]
+            [molsketch-cljs.fragment.xformations :refer 
+             [delete sprout-bond sprout-at-node graft-at-node]]
             [molsketch-cljs.templates :refer [templates]]))
 ;           [molsketch-cljs.core :refer [app-state history]]))
 
@@ -13,6 +14,12 @@
    (fn [{:keys [canvas status]}]
      (when-let [[type id] (active @status)]
        (swap! canvas delete [type id])))
+   \^  ; Shift + 6
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+        (case type
+              :nodes (swap! canvas sprout-at-node (templates :cyclohexyl) id)
+              :bonds (println "Not implemented!"))))
    \6
    (fn [{:keys [canvas status]}]
      (when-let [[type id] (active @status)]

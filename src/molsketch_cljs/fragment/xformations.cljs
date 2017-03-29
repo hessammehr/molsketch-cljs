@@ -3,7 +3,9 @@
                      [transform setval select]])
    (:require [com.rpl.specter :refer [ALL FIRST LAST VAL MAP-VALS]]
              [molsketch-cljs.fragment.query :refer
-              [get-bonds max-node max-bond fusion-candidates sprout-position]]))
+              [get-bonds max-node max-bond fusion-candidates
+               sprout-position sprout-direction connected]]
+             [molsketch-cljs.util :refer [xform-from-to translator-from-to]]))
 
 (defn delete-bond [fragment bond-id]
   (update fragment :bonds dissoc bond-id))
@@ -29,7 +31,7 @@
          (transform [:root :nodes] node-mapping)
          (transform [:root :bonds] bond-mapping))))
 
-(defn transform [fragment xform]
+(defn transform-nodes [fragment xform]
   "Transforms node positions in fragment using (xform [x y]) -> [X Y]."
   (transform [:nodes MAP-VALS :pos] xform fragment))
 
@@ -84,3 +86,47 @@
           (add-node n)
           (add-bond b)))))
 
+(defn graft-at-node [fragment1 fragment2 node]
+  "Graft fragment2 onto fragment1 at node n-id. The root node(s) of 
+  fragment2 are bonded to n-id."
+  (let [min-node-id (inc (max-node fragment1))
+        min-bond-id (inc (max-bond fragment1))
+        node-mapping (partial + min-node-id)
+        bond-mapping (partial + min-bond-id)
+        root-id (get-in fragment2 [:root :nodes])
+        root-pos (get-in fragment2 [:nodes root-id :pos])
+        graft-pos (get-in fragment1 [:nodes node :pos])
+        graft-dir (sprout-direction fragment1 node)
+        xform (xform-from-to root-pos graft-dir)
+        root-neighbours (connected fragment2 root-id) ; nodes connected to root
+        translation (translator-from-to root-pos graft-pos)
+        fragment2 (-> fragment2
+                  (dissoc :root)
+                  (delete [:nodes root-id])
+                  (transform-nodes (comp translation xform))
+                  (remap node-mapping bond-mapping))
+        fragment1 (-> fragment1
+                      (merge-fragments fragment2)
+                      (connect node (node-mapping root-id)))]
+    (reduce (fn [frag n-id] (connect frag node (node-mapping n-id))) fragment1 root-neighbours)))
+
+(defn sprout-at-node [fragment1 fragment2 node]
+  "Graft fragment2 onto fragment1 at node n-id. The root node(s) of 
+  fragment2 are bonded to n-id."
+  (let [min-node-id (inc (max-node fragment1))
+        min-bond-id (inc (max-bond fragment1))
+        node-mapping (partial + min-node-id)
+        bond-mapping (partial + min-bond-id)
+        root-id (get-in fragment2 [:root :nodes])
+        root-pos (get-in fragment2 [:nodes root-id :pos])
+        graft-pos (get-in fragment1 [:nodes node :pos])
+        graft-dir (sprout-direction fragment1 node)
+        xform (xform-from-to root-pos graft-dir)
+        translation (translator-from-to [0 0] graft-pos)
+        fragment2 (-> fragment2
+                  (dissoc :root)
+                  (transform-nodes (comp translation xform))
+                  (remap node-mapping bond-mapping))]
+      (-> fragment1
+        (merge-fragments fragment2)
+        (connect node (node-mapping root-id)))))
