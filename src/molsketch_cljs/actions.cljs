@@ -14,21 +14,23 @@
    (fn [{:keys [canvas status]}]
      (when-let [[type id] (active @status)]
        (swap! canvas delete [type id])))
-   \^  ; Shift + 6
-   (fn [{:keys [canvas status]}]
-     (when-let [[type id] (active @status)]
-        (case type
-              :nodes (swap! canvas sprout-at-node (templates :cyclohexyl) id)
-              :bonds (println "Not implemented!"))))
    \6
    (fn [{:keys [canvas status]}]
      (when-let [[type id] (active @status)]
-        (case type
-              :nodes (swap! canvas graft-at-node (templates :cyclohexyl) id)
-              :bonds (println "Not implemented!"))))
+       (case type
+         :nodes (swap! canvas graft-at-node (templates :cyclohexyl) id)
+         :bonds (println "Not implemented!"))))
    \Z
    (fn [{:keys [canvas history]}]
-    (when-let [s (peek @history)]
-      (let [ss (pop @history)]
-        (reset! canvas s)
-        (reset! history ss))))})
+     (when-let [s (peek @history)]
+       (let [ss (pop @history)]
+         (reset! canvas s)
+         (reset! history ss))))
+   :shift
+   { \6
+    (fn [{:keys [canvas status]}]
+      (when-let [[type id] (active @status)]
+        (case type
+          :nodes (swap! canvas sprout-at-node (templates :cyclohexyl) id)
+          :bonds (println "Not implemented!"))))}
+   })

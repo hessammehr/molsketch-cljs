@@ -83,16 +83,16 @@
       (do-drag parsed))))
 
 (defn key-press [ev]
-  (let [{k :key} (parse-keyboard-event ev)
+  (let [{k :key shift :shift} (parse-keyboard-event ev)
         {status :status} app-state
-        key-seq (conj (get @status :key-seq []) k)
-        f (get-in keymap key-seq)]
-    (println key-seq f)
-    (cond
-      (nil? f) (swap! status assoc :key-seq [])
-      (map? f) (swap! status assoc [:status :key-seq] key-seq)
-      :else (do (f app-state)
-                (swap! status assoc :key-seq [])))))
+        key-seq (cond shift [:shift] :else [])
+        key-seq (conj key-seq k) ]
+    (if-let [f (get-in keymap key-seq)]
+      (f app-state))))
+
+(defn key-up [ev]
+  (let [{status :status} app-state]
+    (swap! status assoc :key-seq [])))
 
 (defn editor []
   (let [{:keys [canvas status history]} app-state]
@@ -108,6 +108,7 @@
                           (. js/document (getElementById "app")))
 
 (aset js/document "onkeydown" key-press)
+(aset js/document "onkeyup" key-up)
 
 (defn on-js-reload []
   (println "Reloaded!"))
