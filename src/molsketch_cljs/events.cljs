@@ -11,5 +11,6 @@
 
 (defn parse-keyboard-event [ev]
   {:key (char (aget ev "keyCode"))
-   :shift (aget ev "shiftKey")})
+   :shift (aget ev "shiftKey")
+   :ctrl (aget ev "ctrlKey")})
 

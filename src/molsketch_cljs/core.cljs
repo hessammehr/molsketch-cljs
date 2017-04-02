@@ -83,10 +83,10 @@
       (do-drag parsed))))
 
 (defn key-press [ev]
-  (let [{k :key shift :shift} (parse-keyboard-event ev)
+  (let [{k :key shift :shift ctrl :ctrl} (parse-keyboard-event ev)
         {status :status} app-state
-        key-seq (cond shift [:shift] :else [])
-        key-seq (conj key-seq k) ]
+        key-seq (cond ctrl [:ctrl] shift [:shift] :else [])
+        key-seq (conj key-seq k)]
     (if-let [f (get-in keymap key-seq)]
       (f app-state))))
 

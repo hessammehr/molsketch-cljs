@@ -20,14 +20,17 @@
        (case type
          :nodes (swap! canvas graft-at-node (templates :cyclohexyl) id)
          :bonds (println "Not implemented!"))))
-   \Z
+
+   :ctrl
+   {\Z
    (fn [{:keys [canvas history]}]
      (when-let [s (peek @history)]
        (let [ss (pop @history)]
          (reset! canvas s)
-         (reset! history ss))))
+         (reset! history ss))))}
+
    :shift
-   { \6
+   {\6
     (fn [{:keys [canvas status]}]
       (when-let [[type id] (active @status)]
         (case type
