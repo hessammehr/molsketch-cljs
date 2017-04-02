@@ -20,14 +20,32 @@
        (case type
          :nodes (swap! canvas graft-at-node (templates :cyclohexyl) id)
          :bonds (println "Not implemented!"))))
+   \5
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas graft-at-node (templates :cyclopentyl) id)
+         :bonds (println "Not implemented!"))))
+   \4
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas graft-at-node (templates :cyclobutyl) id)
+         :bonds (println "Not implemented!"))))
+   \3
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas graft-at-node (templates :cyclopropyl) id)
+         :bonds (println "Not implemented!"))))
 
    :ctrl
    {\Z
-   (fn [{:keys [canvas history]}]
-     (when-let [s (peek @history)]
-       (let [ss (pop @history)]
-         (reset! canvas s)
-         (reset! history ss))))}
+    (fn [{:keys [canvas history]}]
+      (when-let [s (peek @history)]
+        (let [ss (pop @history)]
+          (reset! canvas s)
+          (reset! history ss))))}
 
    :shift
    {\6
@@ -35,5 +53,23 @@
       (when-let [[type id] (active @status)]
         (case type
           :nodes (swap! canvas sprout-at-node (templates :cyclohexyl) id)
-          :bonds (println "Not implemented!"))))}
+          :bonds (println "Not implemented!"))))
+   \5
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas sprout-at-node (templates :cyclopentyl) id)
+         :bonds (println "Not implemented!"))))
+   \4
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas sprout-at-node (templates :cyclobutyl) id)
+         :bonds (println "Not implemented!"))))
+   \3
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (swap! canvas sprout-at-node (templates :cyclopropyl) id)
+         :bonds (println "Not implemented!"))))}
    })
