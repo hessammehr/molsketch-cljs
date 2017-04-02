@@ -98,17 +98,20 @@
         graft-pos (get-in fragment1 [:nodes node :pos])
         graft-dir (sprout-direction fragment1 node)
         xform (xform-from-to root-pos graft-dir)
+        translation (translator-from-to (xform root-pos) graft-pos)
         root-neighbours (connected fragment2 root-id) ; nodes connected to root
-        translation (translator-from-to root-pos graft-pos)
         fragment2 (-> fragment2
                   (dissoc :root)
                   (delete [:nodes root-id])
                   (transform-nodes (comp translation xform))
                   (remap node-mapping bond-mapping))
         fragment1 (-> fragment1
-                      (merge-fragments fragment2)
-                      (connect node (node-mapping root-id)))]
-    (reduce (fn [frag n-id] (connect frag node (node-mapping n-id))) fragment1 root-neighbours)))
+                      (merge-fragments fragment2))]
+    (println fragment1)
+    ; graft root's neighbours at graft position
+    (reduce (fn [frag n-id] (connect frag node (node-mapping n-id)))
+            fragment1 
+            root-neighbours)))
 
 (defn sprout-at-node [fragment1 fragment2 node]
   "Graft fragment2 onto fragment1 at node n-id. The root node(s) of 
