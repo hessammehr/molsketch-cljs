@@ -32,7 +32,16 @@ You can get a nicer REPL (history, line editing) with `rlwrap`:
 rlwrap lein figwheel
 ```
 
-Pull requests are welcome!
+Pull requests are welcome! Looking to add a feature? I have a few
+ideas listed below.
+
+## Todo
+* Multiple bonds
+* Atom label editing
+* Keeping track of implicit hydrogens
+* Copy vector graphics to clipboard
+* Read/write popular chemical structure formats
+* Style support
 
 ## License
 
