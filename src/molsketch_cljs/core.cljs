@@ -58,9 +58,6 @@
     (swap! status update :mouse merge {:x x2 :y y2 :dragging true})
     (swap! canvas transform-cursor cursor xform)))
 
-(defn end-drag [{x :x y :y}]
-  (println "Drag ended: " x y))
-
 (defn mouse-down [ev]
   (let [{:keys [x y] :as parsed} (parse-mouse-event ev)
         {status :status} app-state]
@@ -70,8 +67,7 @@
   (let [{status :status} app-state
         {x2 :x y2 :y} (parse-mouse-event ev)
         {x1 :x y1 :y} (get @status :mouse)]
-    (if (get-in @status [:mouse :dragging])
-      (end-drag {:x x2 :y y2})
+    (if-not (get-in @status [:mouse :dragging])
       (normal-click {:x x1 :y y1}))
     (swap! status assoc :mouse nil)))
 
