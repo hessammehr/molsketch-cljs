@@ -37,7 +37,19 @@
      (when-let [[type id] (active @status)]
        (case type
          :nodes (swap! canvas graft-at-node (templates :cyclopropyl) id)
-         :bonds (println "Not implemented!"))))
+         :bonds (swap! canvas assoc-in [:bonds id :order] 3))))
+   \2
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (println "Not implemented!")
+         :bonds (swap! canvas assoc-in [:bonds id :order] 2))))
+   \1
+   (fn [{:keys [canvas status]}]
+     (when-let [[type id] (active @status)]
+       (case type
+         :nodes (println "Not implemented!")
+         :bonds (swap! canvas assoc-in [:bonds id :order] 1))))
 
    :ctrl
    {\Z

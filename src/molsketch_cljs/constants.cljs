@@ -8,6 +8,7 @@
 (def min-drag-radius 5) ; movement before it's counted as a drag
 (def fuse-tolerance 5)
 (def node-marker-radius 5)
+(def multiple-bond-spacing 3)
 
 (def editor-dimensions [600 200])
 

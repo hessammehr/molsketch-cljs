@@ -1,6 +1,6 @@
 (ns molsketch-cljs.components
-  (:require [molsketch-cljs.util :refer [clip-line]]
-            [molsketch-cljs.constants :refer [node-radius margin
+  (:require [molsketch-cljs.util :refer [clip-line displacement rotate-degrees normalize]]
+            [molsketch-cljs.constants :refer [node-radius margin multiple-bond-spacing
                                               node-marker-radius]]))
                                               
 (declare node bond hover-marker selection-marker)
@@ -32,17 +32,22 @@
                [:text {:x x :y y :class (str "label" cls)}
                 (name elem)]))))
 
-(defn multiple-bond [[x1 y1] [x2 y2]]
-  (let [bond-vec [(- x2 x1) (- y2 y1)]
-        offset-vec (rotate-degrees bond-vec 90.0)]))
+; (defn multiple-bond [[x1 y1] [x2 y2]]
+;   (let [bond-vec (displacement [x1 y1] [x2 y2])
+;         offset-vec ]))
 
 (defn bond [canvas b & {:keys [hovered selected]}]
-  (let [{n :nodes order :order :or [order 1]} b
+  (let [{n :nodes order :order :or {order 1}} b
         [{p1 :pos} {p2 :pos} :as nodes] (map (:nodes canvas) n)
         [clip1 clip2] (map margin nodes)
-        [[x1 y1] [x2 y2]] (clip-line p1 p2 clip1 clip2)]
-    [:line {:x1 x1 :y1 y1
-            :x2 x2 :y2 y2
-            :class (str "bond"
+        [[x1 y1] [x2 y2]] (clip-line p1 p2 clip1 clip2)
+        offset (- (* (- order 1) (/ multiple-bond-spacing 2)))
+        offset-dir (rotate-degrees (displacement p1 p2) 90.0)
+        [offset-x offset-y] (normalize offset-dir offset)
+        [delta-x delta-y] (normalize offset-dir multiple-bond-spacing)]
+    [:g  (for [n (range order)]
+      [:line {:x1 (+ x1 offset-x (* n delta-x)) :y1 (+ y1 offset-y (* n delta-y))
+              :x2 (+ x2 offset-x (* n delta-x)) :y2 (+ y2 offset-y (* n delta-y))
+              :class (str "bond"
                         (when hovered " hovered")
-                        (when selected " selected"))}]))
+                        (when selected " selected"))}])]))
