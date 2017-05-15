@@ -107,7 +107,6 @@
                   (remap node-mapping bond-mapping))
         fragment1 (-> fragment1
                       (merge-fragments fragment2))]
-    (println fragment1)
     ; graft root's neighbours at graft position
     (reduce (fn [frag n-id] (connect frag node (node-mapping n-id)))
             fragment1 

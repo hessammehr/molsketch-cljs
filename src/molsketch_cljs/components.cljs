@@ -32,8 +32,12 @@
                [:text {:x x :y y :class (str "label" cls)}
                 (name elem)]))))
 
+(defn multiple-bond [[x1 y1] [x2 y2]]
+  (let [bond-vec [(- x2 x1) (- y2 y1)]
+        offset-vec (rotate-degrees bond-vec 90.0)]))
+
 (defn bond [canvas b & {:keys [hovered selected]}]
-  (let [{n :nodes} b
+  (let [{n :nodes order :order :or [order 1]} b
         [{p1 :pos} {p2 :pos} :as nodes] (map (:nodes canvas) n)
         [clip1 clip2] (map margin nodes)
         [[x1 y1] [x2 y2]] (clip-line p1 p2 clip1 clip2)]

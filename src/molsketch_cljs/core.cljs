@@ -21,7 +21,7 @@
     1 {:pos [90 50]}
     2 {:pos [90 80] :elem :O}}
    :bonds
-   {0 {:nodes #{0 1}}
+   {0 {:nodes #{0 1} :order 2}
     1 {:nodes #{1 2}}}})
    
 (def app-state
