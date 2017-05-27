@@ -75,11 +75,22 @@
        (map first)
        (into #{})))
 
-(defn order [fragment]
+(defn bond-order [fragment bond-id]
+  (some-> fragment
+    (get-in [:bonds bond-id])
+    (get :order 1)))
+
+(defn node-order [fragment node-id]
+  "Returns the numbers of bonds going to node `node-id` in `fragment`.
+  Multiple bon"
+  (as-> fragment f
+      (get-bonds f node-id)
+      (map (partial bond-order fragment) f)
+      (apply + f)))
+
+(defn fragment-order [fragment]
   "Returns the order of fragment: the number of bonds going to its root node."
-  (-> fragment
-      (connected (get-in fragment [:root :nodes]))
-      count))
+  (node-order fragment (get-in fragment [:root :nodes])))
 
 (defn fusion-candidates [fragment node-id]
   (let [pos (get-in fragment [:nodes node-id :pos])
