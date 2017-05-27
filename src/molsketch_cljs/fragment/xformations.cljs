@@ -101,10 +101,10 @@
         translation (translator-from-to (xform root-pos) graft-pos)
         root-neighbours (connected fragment2 root-id) ; nodes connected to root
         fragment2 (-> fragment2
-                  (dissoc :root)
-                  (delete [:nodes root-id])
-                  (transform-nodes (comp translation xform))
-                  (remap node-mapping bond-mapping))
+                   (dissoc :root)
+                   (delete [:nodes root-id])
+                   (transform-nodes (comp translation xform))
+                   (remap node-mapping bond-mapping))
         fragment1 (-> fragment1
                       (merge-fragments fragment2))]
     ; graft root's neighbours at graft position
@@ -126,9 +126,9 @@
         xform (xform-from-to root-pos graft-dir)
         translation (translator-from-to [0 0] graft-pos)
         fragment2 (-> fragment2
-                  (dissoc :root)
-                  (transform-nodes (comp translation xform))
-                  (remap node-mapping bond-mapping))]
+                   (dissoc :root)
+                   (transform-nodes (comp translation xform))
+                   (remap node-mapping bond-mapping))]
       (-> fragment1
         (merge-fragments fragment2)
         (connect node (node-mapping root-id)))))
