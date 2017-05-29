@@ -59,6 +59,11 @@
   (-> fragment
       (assoc-in [:nodes n-id] node-props)))
 
+(defn change-elem [fragment n-id elem]
+  "Changes the node label for node `n-id` to elem,
+  which is a keyword."
+  (assoc-in fragment [:nodes n-id :elem] elem))
+
 (defn new-bond [fragment bond-props]
   "Returns a new hashmap representing a bond produced by associng an
   auto-incremented :id to the bond-propes provided."
