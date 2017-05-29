@@ -46,8 +46,9 @@
         [offset-x offset-y] (normalize offset-dir offset)
         [delta-x delta-y] (normalize offset-dir multiple-bond-spacing)]
     [:g  (for [n (range order)]
-      [:line {:x1 (+ x1 offset-x (* n delta-x)) :y1 (+ y1 offset-y (* n delta-y))
-              :x2 (+ x2 offset-x (* n delta-x)) :y2 (+ y2 offset-y (* n delta-y))
-              :class (str "bond"
-                        (when hovered " hovered")
-                        (when selected " selected"))}])]))
+          ^{:key (str "bline" n)}
+          [:line {:x1 (+ x1 offset-x (* n delta-x)) :y1 (+ y1 offset-y (* n delta-y))
+                  :x2 (+ x2 offset-x (* n delta-x)) :y2 (+ y2 offset-y (* n delta-y))
+                  :class (str "bond"
+                            (when hovered " hovered")
+                            (when selected " selected"))}])]))
