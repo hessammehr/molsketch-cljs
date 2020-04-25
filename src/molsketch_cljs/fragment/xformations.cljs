@@ -92,8 +92,8 @@
           (add-bond b)))))
 
 (defn graft-at-node [fragment1 fragment2 node]
-  "Graft fragment2 onto fragment1 at node n-id. The root node(s) of 
-  fragment2 are bonded to n-id."
+  "Graft fragment2 onto fragment1 at node `node`. The root node(s) of
+  fragment2 are replaced with `node`."
   (let [min-node-id (inc (max-node fragment1))
         min-bond-id (inc (max-bond fragment1))
         node-mapping (partial + min-node-id)
@@ -118,8 +118,8 @@
             root-neighbours)))
 
 (defn sprout-at-node [fragment1 fragment2 node]
-  "Graft fragment2 onto fragment1 at node n-id. The root node(s) of 
-  fragment2 are bonded to n-id."
+  "Sprout fragment2 out of fragment1 at node `node`. The root node(s) of
+  fragment2 are bonded to `node`."
   (let [min-node-id (inc (max-node fragment1))
         min-bond-id (inc (max-bond fragment1))
         node-mapping (partial + min-node-id)
@@ -137,3 +137,9 @@
       (-> fragment1
         (merge-fragments fragment2)
         (connect node (node-mapping root-id)))))
+
+(defn graft-on-bond [fragment1 fragment2 bond]
+  "Graft `fragment2` onto `fragment1` at bond `bond`, which will
+  replace the root bond of `fragment2`."
+  (println "Not implemented!")
+  fragment1)
