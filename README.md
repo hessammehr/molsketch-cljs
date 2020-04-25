@@ -12,11 +12,24 @@ To run molsketch-cljs:
 ```bash
 git clone https://github.com/hessammehr/molsketch-cljs
 cd molsketch-cljs
-lein figwheel
+lein fig:build
 ```
 
-and go `http://localhost:3449`. This gives you a live REPL that you can use
-to mess around:
+This will automatically launch a browser tab at `http://localhost:9500`. 
+
+## Keybindings
+While hovering on a bond:
+- **del**: Delete bond
+- **1, 2, 3**: Make bond single, double, or triple
+
+While hovering on an atom:
+- **0**: Sprout a new atom
+- **3, 4, 5, 6**: Graft a cyclopropyl, cyclobutyl, cyclopentyl, or cyclohexyl
+ring at atom.
+- **C, N, O, S, P**: Change atom element to C, N, etc.
+
+## REPL fun
+Figwheel gives you a live REPL that you can use to mess around:
 
 ```clojure
 (require '[molsketch-cljs.core :as c])
@@ -26,25 +39,19 @@ to mess around:
 ; Commit the change. The new atom will show up in your browser now.
 (reset! (:canvas c/app-state) *1)
 ```
-You can get a nicer REPL (history, line editing) with `rlwrap`:
 
-```bash
-rlwrap lein figwheel
-```
-
-Pull requests are welcome! Looking to add a feature? I have a few
-ideas listed below.
+Pull requests are welcome! I have a few ideas listed below.
 
 ## Todo
-* Multiple bonds
-* Atom label editing
-* Keeping track of implicit hydrogens
-* Copy vector graphics to clipboard
-* Read/write popular chemical structure formats
-* Style support
+* [X] Multiple bonds
+* [ ] Custom atom labels
+* [ ] Keeping track of implicit hydrogens
+* [ ] Copy vector graphics to clipboard
+* [ ] Read/write popular chemical structure formats
+* [ ] Style support
 
 ## License
 
-Copyright © 2015-2017 S. Hessam M. Mehr
+Copyright © 2015-2020 S. Hessam M. Mehr
 
 MIT License
