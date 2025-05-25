@@ -1,10 +1,12 @@
 # molsketch-cljs
 
+👉 [Try the app live here](https://hessammehr.github.io/molsketch-cljs/)
+
 A 2D molecular structure drawing environment in ClojureScript.
 
 ![screenshot](screenshot.png)
 
-## Setup
+## Local development
 
 You will need Java and [Node.js](https://nodejs.org/) installed.
 
