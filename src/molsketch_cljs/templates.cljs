@@ -14,10 +14,10 @@
 (defn ring [n]
   (let [theta (/ (* 2 (.-PI js/Math)) n)
         b const/bond-length
-        r (/ b (Math.sqrt (* 2 (- 1 (Math/cos theta)))))
+        r (/ b (js/Math.sqrt (* 2 (- 1 (js/Math.cos theta)))))
         nodes (into {} (for [a (range n) :let [t (* a theta)]]
-                         [a {:pos [(- (* r (Math/cos t)) r b) ; +b so root points to [1 0]
-                                   (* r (Math/sin t))]}]))
+                         [a {:pos [(- (* r (js/Math.cos t)) r b) ; +b so root points to [1 0]
+                                   (* r (js/Math.sin t))]}]))
         bonds (into {(dec n) {:nodes #{0 (dec n)}}} ; closing bond
                     (for [b (range (dec n))]
                       [b {:nodes #{b (inc b)}}]))]

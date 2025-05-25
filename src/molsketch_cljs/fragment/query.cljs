@@ -41,7 +41,7 @@
   (let [ks (keys (:nodes fragment))
         ns (vals (:nodes fragment))
         ds (map #(distance point (:pos %)) ns)
-        dds (map #(.abs js.Math (- % radius)) ds)
+        dds (map #(js/Math.abs (- % radius)) ds)
         within (keep-indexed #(when (< %2 tol) (nth ks %1)) dds)]
     (into #{} within)))
 

@@ -1,5 +1,6 @@
 (ns molsketch-cljs.core
   (:require [reagent.core :as reagent :refer [atom]]
+            [reagent.dom :as reagent.dom]
             [molsketch-cljs.components :refer [structure]]
             [molsketch-cljs.constants :refer [click-radius hover-radius
                                               min-drag-radius
@@ -100,8 +101,9 @@
       [:p.status (str "Status: " @status)]
       [:p.status (str "History: (" (count @history) " items)")]]))
 
-(reagent/render-component [editor]
-                          (. js/document (getElementById "app")))
+(defn ^:export init []
+  (reagent.dom/render [editor]
+                     (. js/document (getElementById "app"))))
 
 (aset js/document "onkeydown" key-press)
 (aset js/document "onkeyup" key-up)

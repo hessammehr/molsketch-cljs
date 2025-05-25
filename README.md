@@ -1,21 +1,28 @@
 # molsketch-cljs
 
-A 2D molecular structure drawing environment in Clojurescript.
+A 2D molecular structure drawing environment in ClojureScript.
 
 ![screenshot](screenshot.png)
 
 ## Setup
 
-You will need Java and [Leiningen](https://leiningen.org/) installed.
+You will need Java and [Node.js](https://nodejs.org/) installed.
+
 To run molsketch-cljs:
 
 ```bash
-git clone https://github.com/hessammehr/molsketch-cljs
-cd molsketch-cljs
-lein fig:build
+# Clone the repo
+ git clone https://github.com/hessammehr/molsketch-cljs
+ cd molsketch-cljs
+
+# Install npm dependencies
+ npm install
+
+# Start the development server (with hot reload)
+ npx shadow-cljs watch app
 ```
 
-This will automatically launch a browser tab at `http://localhost:9500`. 
+Then open your browser at [http://localhost:9500](http://localhost:9500).
 
 ## Keybindings
 While hovering on a bond:
@@ -29,8 +36,13 @@ ring at atom.
 - **C, N, O, S, P**: Change atom element to C, N, etc.
 
 ## REPL fun
-Figwheel gives you a live REPL that you can use to mess around:
+You can use a ClojureScript REPL with Shadow CLJS. For example, in another terminal:
 
+```bash
+npx shadow-cljs cljs-repl app
+```
+
+Then in the REPL:
 ```clojure
 (require '[molsketch-cljs.core :as c])
 (require '[molsketch-cljs.fragment.xformations :as x])
@@ -52,6 +64,6 @@ Pull requests are welcome! I have a few ideas listed below.
 
 ## License
 
-Copyright © 2015-2020 S. Hessam M. Mehr
+Copyright © 2015-2025 S. Hessam M. Mehr
 
 MIT License
