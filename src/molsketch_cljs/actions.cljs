@@ -74,7 +74,19 @@
           (when-let [s (peek @history)]
             (let [ss (pop @history)]
               (reset! canvas s)
-              (reset! history ss))))}
+              (reset! history ss))))
+       \C
+        (fn [app-state]
+          (let [svg-element (.querySelector js/document ".editor svg")
+                svg-html (when svg-element (.-outerHTML svg-element))]
+            (if svg-html
+              (let [xml-header "<?xml version=\"1.0\" standalone=\"no\"?>\n"
+                    svg-with-header (if (.startsWith svg-html "<?xml") svg-html (str xml-header svg-html))
+                    blob-svg (js/Blob. [svg-with-header] #js {:type "image/svg+xml"})
+                    item (js/ClipboardItem. #js {"image/svg+xml" blob-svg})]
+                (.write js/navigator.clipboard #js [item])
+                (println "SVG copied to clipboard."))
+              (println "Could not find SVG element to copy."))))}
 
       :shift
       {\6
@@ -101,4 +113,4 @@
             (case type
               :nodes (swap! canvas sprout-at-node (templates :cyclopropyl) id)
               :bonds (println "Not implemented!"))))}}))
-   
+
